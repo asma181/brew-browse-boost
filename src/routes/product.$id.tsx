@@ -66,8 +66,8 @@ function ProductPage() {
   const totalReviews = product.baseReviews + productReviews.length;
 
   const pairs = (product.pairs ?? [])
-    .map((id) => getProduct(id))
-    .filter(Boolean) as typeof products;
+    .map((id: string) => getProduct(id))
+    .filter(Boolean) as NonNullable<ReturnType<typeof getProduct>>[];
 
   const alsoLike = products
     .filter((p) => p.id !== product.id && p.category !== product.category)
@@ -174,7 +174,7 @@ function ProductPage() {
               ))}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {ratingTags.split(", ").map((tag) => (
+              {ratingTags.map((tag: string) => (
                 <button
                   key={tag}
                   onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}

@@ -50,7 +50,7 @@ function Menu() {
   }, [q, cat, taste, lang]);
 
   const setSearch = (next: Partial<MenuSearch>) =>
-    navigate({ search: (prev) => ({ ...prev, ...next }) });
+    navigate({ search: (prev: MenuSearch) => ({ ...prev, ...next }) });
 
   return (
     <div className="min-h-screen pb-28">
