@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Search, Sparkles, Flame } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { products, categories, tasteFilters } from "@/data/products";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
@@ -22,6 +23,44 @@ function Home() {
   const { lang } = useStore();
   const trending = products.filter((p) => p.trending).slice(0, 6);
   const popular = [...products].sort((a, b) => b.baseReviews - a.baseReviews).slice(0, 4);
+
+  const catList = categories.filter((c) => c.id !== "all");
+  const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const userScrollingRef = useRef(false);
+
+  // Auto-update active category as user scrolls through sections
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (userScrollingRef.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) {
+          const id = (visible.target as HTMLElement).dataset.catId;
+          if (id) setActiveCat(id);
+        }
+      },
+      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Keep the active tab visible in the horizontal scroller
+  useEffect(() => {
+    const el = tabRefs.current[activeCat];
+    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeCat]);
+
+  const scrollToCat = (id: string) => {
+    setActiveCat(id);
+    userScrollingRef.current = true;
+    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => { userScrollingRef.current = false; }, 800);
+  };
 
   return (
     <div className="min-h-screen pb-28">
@@ -61,28 +100,43 @@ function Home() {
           <Search className="h-4 w-4" />
           {t("search", lang)}
         </Link>
+      </div>
 
-        {/* Categories */}
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">{t("categories", lang)}</h3>
-          </div>
-          <div className="scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5">
-            {categories.filter((c) => c.id !== "all").map((c) => (
-              <Link
-                key={c.id}
-                to="/menu"
-                search={{ cat: c.id }}
-                className="glass shrink-0 rounded-full px-4 py-2.5 text-sm font-medium"
-              >
-                {c.name[lang]}
-              </Link>
-            ))}
-          </div>
-        </section>
+      {/* Sticky text-only Category scroller */}
+      <div className="sticky top-0 z-30 mt-5 bg-background/85 backdrop-blur-xl">
+        <div className="mx-auto max-w-md">
+          <nav className="scrollbar-hide flex gap-6 overflow-x-auto px-5 py-3" aria-label="Categories">
+            {catList.map((c) => {
+              const active = activeCat === c.id;
+              return (
+                <button
+                  key={c.id}
+                  ref={(el) => { tabRefs.current[c.id] = el; }}
+                  onClick={() => scrollToCat(c.id)}
+                  className="relative shrink-0 py-1 text-base transition"
+                >
+                  <span
+                    className={`font-display tracking-tight transition-all ${
+                      active
+                        ? "font-bold text-foreground"
+                        : "font-normal text-muted-foreground/80"
+                    }`}
+                  >
+                    {c.name[lang]}
+                  </span>
+                  {active && (
+                    <span className="absolute left-1/2 -bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-full bg-gold" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
 
+      <div className="mx-auto max-w-md px-5">
         {/* Trending */}
-        <section className="mt-7">
+        <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
               <Flame className="h-4 w-4 text-accent" /> {t("trending", lang)}
@@ -133,6 +187,32 @@ function Home() {
             ))}
           </div>
         </section>
+
+        {/* Category sections — drive the sticky scroller */}
+        {catList.map((c) => {
+          const items = products.filter((p) => p.category === c.id);
+          if (items.length === 0) return null;
+          return (
+            <section
+              key={c.id}
+              data-cat-id={c.id}
+              ref={(el) => { sectionRefs.current[c.id] = el; }}
+              className="mt-10 scroll-mt-20"
+            >
+              <div className="mb-4 flex items-end justify-between">
+                <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
+                <Link to="/menu" search={{ cat: c.id }} className="text-xs text-muted-foreground">
+                  See all
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {items.slice(0, 6).map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <BottomNav />
