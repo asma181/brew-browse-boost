@@ -119,7 +119,7 @@ function ProductPage() {
               </div>
             </div>
             <div className="text-end">
-              <div className="font-display text-3xl font-bold text-gradient-gold">${product.price.toFixed(2)}</div>
+              <div className="font-display text-3xl font-bold text-gradient-gold">{product.price.toFixed(3)} DT</div>
             </div>
           </div>
 
