@@ -32,7 +32,7 @@ export function ProductCard({ product, index = 0, variant = "default" }: Props) 
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{product.description[lang]}</p>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-display text-xl font-bold text-gradient-gold">${product.price.toFixed(2)}</span>
+              <span className="font-display text-xl font-bold text-gradient-gold">{product.price.toFixed(3)} DT</span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Star className="h-3.5 w-3.5 fill-gold text-gold" />
                 {rating.toFixed(1)}
@@ -74,7 +74,7 @@ export function ProductCard({ product, index = 0, variant = "default" }: Props) 
           </div>
           <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{product.description[lang]}</p>
           <div className="mt-2 flex items-center justify-between">
-            <span className="font-display text-lg font-bold text-gradient-gold">${product.price.toFixed(2)}</span>
+            <span className="font-display text-lg font-bold text-gradient-gold">{product.price.toFixed(3)} DT</span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Star className="h-3 w-3 fill-gold text-gold" />
               {rating.toFixed(1)}

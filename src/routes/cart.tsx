@@ -69,7 +69,7 @@ function CartPage() {
                   <div className="flex min-w-0 flex-1 flex-col justify-between">
                     <div className="min-w-0">
                       <h3 className="truncate font-display text-base font-semibold">{i.product.name[lang]}</h3>
-                      <p className="text-xs text-muted-foreground">${i.product.price.toFixed(2)} {t("qty", lang).toLowerCase()}</p>
+                      <p className="text-xs text-muted-foreground">{i.product.price.toFixed(3)} DT {t("qty", lang).toLowerCase()}</p>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 rounded-full bg-surface-elevated px-1 py-1">
@@ -82,7 +82,7 @@ function CartPage() {
                         </button>
                       </div>
                       <span className="font-display text-base font-bold text-gradient-gold">
-                        ${(i.product.price * i.qty).toFixed(2)}
+                        {(i.product.price * i.qty).toFixed(3)} DT
                       </span>
                     </div>
                   </div>
@@ -120,7 +120,7 @@ function CartPage() {
               <div className="mb-3 flex items-end justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">{t("total", lang)}</p>
-                  <p className="font-display text-3xl font-bold text-gradient-gold">${total.toFixed(2)}</p>
+                  <p className="font-display text-3xl font-bold text-gradient-gold">{total.toFixed(3)} DT</p>
                 </div>
                 <p className="text-xs text-muted-foreground">{count} {t("items", lang)}</p>
               </div>
@@ -155,13 +155,13 @@ function CartPage() {
                     <strong className="font-display text-base">{i.qty}×</strong>
                     <span>{i.product.name[lang]}</span>
                   </span>
-                  <span className="font-mono text-muted-foreground">${(i.product.price * i.qty).toFixed(2)}</span>
+                  <span className="font-mono text-muted-foreground">{(i.product.price * i.qty).toFixed(3)} DT</span>
                 </div>
               ))}
             </div>
             <div className="flex items-end justify-between">
               <span className="text-sm uppercase tracking-wider text-muted-foreground">{t("total", lang)}</span>
-              <span className="font-display text-4xl font-bold text-gradient-gold">${total.toFixed(2)}</span>
+              <span className="font-display text-4xl font-bold text-gradient-gold">{total.toFixed(3)} DT</span>
             </div>
             <button
               onClick={() => setShowSummary(false)}
