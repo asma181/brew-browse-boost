@@ -105,7 +105,7 @@ function ProductPage() {
       </div>
 
       <div className="mx-auto -mt-12 max-w-md px-5">
-        <div className="glass rounded-[2rem] p-6 animate-float-up">
+        <div className="animate-float-up px-1">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <span className="text-xs uppercase tracking-[0.2em] text-gold">{product.category}</span>

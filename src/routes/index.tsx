@@ -1,13 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Search, Sparkles, Flame } from "lucide-react";
+import { ArrowRight, Search, Sparkles, Heart, Flame, Candy, Leaf, Landmark, Wallet, Coffee } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { products, categories, tasteFilters } from "@/data/products";
+import { products, categories, tasteFilters, type Taste } from "@/data/products";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
 import { LangSwitch } from "@/components/lang-switch";
 import heroImg from "@/assets/hero-coffee.jpg";
+
+const tasteIcons: Record<Taste, React.ComponentType<{ className?: string }>> = {
+  popular: Flame,
+  sweet: Candy,
+  healthy: Leaf,
+  traditional: Landmark,
+  budget: Wallet,
+  coffee: Coffee,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,8 +30,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { lang } = useStore();
-  const trending = products.filter((p) => p.trending).slice(0, 6);
-  const popular = [...products].sort((a, b) => b.baseReviews - a.baseReviews).slice(0, 4);
+  const favorites = [...products].sort((a, b) => b.baseRating - a.baseRating).slice(0, 6);
 
   const catList = categories.filter((c) => c.id !== "all");
   const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
@@ -135,16 +143,16 @@ function Home() {
       </div>
 
       <div className="mx-auto max-w-md px-5">
-        {/* Trending */}
+        {/* Customer favorites */}
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <Flame className="h-4 w-4 text-accent" /> {t("trending", lang)}
+              <Heart className="h-4 w-4 fill-accent text-accent" /> {t("popular", lang)}
             </h3>
             <Link to="/menu" className="text-xs text-muted-foreground">See all</Link>
           </div>
           <div className="scrollbar-hide -mx-5 flex gap-3 overflow-x-auto px-5 pb-2">
-            {trending.map((p, i) => (
+            {favorites.map((p, i) => (
               <div key={p.id} className="w-[160px] shrink-0">
                 <ProductCard product={p} index={i} />
               </div>
@@ -160,33 +168,30 @@ function Home() {
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {tasteFilters.map((f) => (
-              <Link
-                key={f.id}
-                to="/menu"
-                search={{ taste: f.id }}
-                className="glass rounded-2xl p-3.5 text-start transition active:scale-[0.97]"
-              >
-                <div className="font-display text-base font-semibold">{f.label[lang]}</div>
-                <div className="mt-0.5 text-[11px] text-muted-foreground">
-                  {products.filter((p) => p.tastes.includes(f.id)).length} items
-                </div>
-              </Link>
-            ))}
+            {tasteFilters.map((f) => {
+              const Icon = tasteIcons[f.id];
+              return (
+                <Link
+                  key={f.id}
+                  to="/menu"
+                  search={{ taste: f.id }}
+                  className="glass flex items-center gap-3 rounded-2xl p-3.5 text-start transition active:scale-[0.97]"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-gold">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-display text-sm font-semibold">{f.label[lang]}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                      {products.filter((p) => p.tastes.includes(f.id)).length} items
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
-        {/* Popular */}
-        <section className="mt-7">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">{t("popular", lang)}</h3>
-          </div>
-          <div className="space-y-3">
-            {popular.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} variant="wide" />
-            ))}
-          </div>
-        </section>
 
         {/* Category sections — drive the sticky scroller */}
         {catList.map((c) => {

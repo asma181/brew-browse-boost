@@ -112,7 +112,7 @@
   background: color-mix(in oklab, var(--surface-elevated) 75%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid color-mix(in oklab, var(--cream) 8%, transparent);
+  border: 0;
 }
 
 @utility text-gradient-gold {

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search, X, ArrowLeft } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { products, categories, tasteFilters, type Taste } from "@/data/products";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
@@ -31,11 +31,12 @@ export const Route = createFileRoute("/menu")({
 function Menu() {
   const { lang } = useStore();
   const navigate = useNavigate({ from: "/menu" });
-  const { q = "", cat = "all", taste } = Route.useSearch();
+  const { q = "", taste } = Route.useSearch();
+
+  const filtering = Boolean(q || taste);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
-      if (cat !== "all" && p.category !== cat) return false;
       if (taste && !p.tastes.includes(taste)) return false;
       if (q) {
         const needle = q.toLowerCase();
@@ -47,10 +48,47 @@ function Menu() {
       }
       return true;
     });
-  }, [q, cat, taste, lang]);
+  }, [q, taste, lang]);
 
   const setSearch = (next: Partial<MenuSearch>) =>
     navigate({ search: (prev: MenuSearch) => ({ ...prev, ...next }) });
+
+  const catList = categories.filter((c) => c.id !== "all");
+  const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const userScrollingRef = useRef(false);
+
+  useEffect(() => {
+    if (filtering) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (userScrollingRef.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) {
+          const id = (visible.target as HTMLElement).dataset.catId;
+          if (id) setActiveCat(id);
+        }
+      },
+      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [filtering]);
+
+  useEffect(() => {
+    const el = tabRefs.current[activeCat];
+    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeCat]);
+
+  const scrollToCat = (id: string) => {
+    setActiveCat(id);
+    userScrollingRef.current = true;
+    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => { userScrollingRef.current = false; }, 800);
+  };
 
   return (
     <div className="min-h-screen pb-28">
@@ -79,23 +117,6 @@ function Menu() {
           )}
         </div>
 
-        {/* Categories */}
-        <div className="scrollbar-hide -mx-5 mt-4 flex gap-2 overflow-x-auto px-5">
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setSearch({ cat: c.id === "all" ? undefined : c.id })}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
-                (cat === "all" && c.id === "all") || cat === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "glass text-foreground"
-              }`}
-            >
-              {c.name[lang]}
-            </button>
-          ))}
-        </div>
-
         {/* Taste chips */}
         <div className="scrollbar-hide -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
           <button
@@ -118,22 +139,81 @@ function Menu() {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Results */}
-        <div className="mt-5">
-          <p className="mb-3 text-xs text-muted-foreground">{filtered.length} {t("items", lang)}</p>
-          {filtered.length === 0 ? (
-            <div className="glass mt-8 rounded-3xl p-8 text-center">
-              <p className="text-sm text-muted-foreground">{t("noResults", lang)}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {filtered.map((p, i) => (
-                <ProductCard key={p.id} product={p} index={i} />
-              ))}
-            </div>
-          )}
+      {/* Sticky text-only Category scroller (mirrors home) */}
+      {!filtering && (
+        <div className="sticky top-0 z-30 mt-4 bg-background/85 backdrop-blur-xl">
+          <div className="mx-auto max-w-md">
+            <nav className="scrollbar-hide flex gap-6 overflow-x-auto px-5 py-3" aria-label="Categories">
+              {catList.map((c) => {
+                const active = activeCat === c.id;
+                return (
+                  <button
+                    key={c.id}
+                    ref={(el) => { tabRefs.current[c.id] = el; }}
+                    onClick={() => scrollToCat(c.id)}
+                    className="relative shrink-0 py-1 text-base transition"
+                  >
+                    <span
+                      className={`font-display tracking-tight transition-all ${
+                        active
+                          ? "font-bold text-foreground"
+                          : "font-normal text-muted-foreground/80"
+                      }`}
+                    >
+                      {c.name[lang]}
+                    </span>
+                    {active && (
+                      <span className="absolute left-1/2 -bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-full bg-gold" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
+      )}
+
+      <div className="mx-auto max-w-md px-5">
+        {filtering ? (
+          <div className="mt-5">
+            <p className="mb-3 text-xs text-muted-foreground">{filtered.length} {t("items", lang)}</p>
+            {filtered.length === 0 ? (
+              <div className="glass mt-8 rounded-3xl p-8 text-center">
+                <p className="text-sm text-muted-foreground">{t("noResults", lang)}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {filtered.map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          catList.map((c) => {
+            const items = products.filter((p) => p.category === c.id);
+            if (items.length === 0) return null;
+            return (
+              <section
+                key={c.id}
+                data-cat-id={c.id}
+                ref={(el) => { sectionRefs.current[c.id] = el; }}
+                className="mt-8 scroll-mt-20"
+              >
+                <div className="mb-4 flex items-end justify-between">
+                  <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {items.map((p, i) => (
+                    <ProductCard key={p.id} product={p} index={i} />
+                  ))}
+                </div>
+              </section>
+            );
+          })
+        )}
       </div>
 
       <BottomNav />
