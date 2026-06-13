@@ -144,16 +144,16 @@ function Home() {
       </div>
 
       <div className="mx-auto max-w-md px-5">
-        {/* Trending */}
+        {/* Customer favorites */}
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <Flame className="h-4 w-4 text-accent" /> {t("trending", lang)}
+              <Heart className="h-4 w-4 fill-accent text-accent" /> {t("popular", lang)}
             </h3>
             <Link to="/menu" className="text-xs text-muted-foreground">See all</Link>
           </div>
           <div className="scrollbar-hide -mx-5 flex gap-3 overflow-x-auto px-5 pb-2">
-            {trending.map((p, i) => (
+            {favorites.map((p, i) => (
               <div key={p.id} className="w-[160px] shrink-0">
                 <ProductCard product={p} index={i} />
               </div>
@@ -169,19 +169,27 @@ function Home() {
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {tasteFilters.map((f) => (
-              <Link
-                key={f.id}
-                to="/menu"
-                search={{ taste: f.id }}
-                className="glass rounded-2xl p-3.5 text-start transition active:scale-[0.97]"
-              >
-                <div className="font-display text-base font-semibold">{f.label[lang]}</div>
-                <div className="mt-0.5 text-[11px] text-muted-foreground">
-                  {products.filter((p) => p.tastes.includes(f.id)).length} items
-                </div>
-              </Link>
-            ))}
+            {tasteFilters.map((f) => {
+              const Icon = tasteIcons[f.id];
+              return (
+                <Link
+                  key={f.id}
+                  to="/menu"
+                  search={{ taste: f.id }}
+                  className="glass flex items-center gap-3 rounded-2xl p-3.5 text-start transition active:scale-[0.97]"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-gold">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-display text-sm font-semibold">{f.label[lang]}</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">
+                      {products.filter((p) => p.tastes.includes(f.id)).length} items
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
