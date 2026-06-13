@@ -193,17 +193,6 @@ function Home() {
           </div>
         </section>
 
-        {/* Popular */}
-        <section className="mt-7">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-lg font-semibold">{t("popular", lang)}</h3>
-          </div>
-          <div className="space-y-3">
-            {popular.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} variant="wide" />
-            ))}
-          </div>
-        </section>
 
         {/* Category sections — drive the sticky scroller */}
         {catList.map((c) => {
