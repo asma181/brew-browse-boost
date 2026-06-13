@@ -1,13 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Search, Sparkles, Flame } from "lucide-react";
+import { ArrowRight, Search, Sparkles, Heart, Flame, Candy, Leaf, Landmark, Wallet, Coffee } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { products, categories, tasteFilters } from "@/data/products";
+import { products, categories, tasteFilters, type Taste } from "@/data/products";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
 import { LangSwitch } from "@/components/lang-switch";
 import heroImg from "@/assets/hero-coffee.jpg";
+
+const tasteIcons: Record<Taste, React.ComponentType<{ className?: string }>> = {
+  popular: Flame,
+  sweet: Candy,
+  healthy: Leaf,
+  traditional: Landmark,
+  budget: Wallet,
+  coffee: Coffee,
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
