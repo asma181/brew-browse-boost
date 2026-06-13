@@ -31,7 +31,6 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { lang } = useStore();
   const favorites = [...products].sort((a, b) => b.baseRating - a.baseRating).slice(0, 6);
-  const popular = [...products].sort((a, b) => b.baseReviews - a.baseReviews).slice(0, 4);
 
   const catList = categories.filter((c) => c.id !== "all");
   const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
