@@ -126,10 +126,7 @@ function ProductPage() {
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{product.description[lang]}</p>
         </div>
 
-        {/* Story */}
-        <Section title={t("story", lang)}>
-          <p className="text-sm leading-relaxed text-muted-foreground">{product.story[lang]}</p>
-        </Section>
+        {/* Story removed per request */}
 
         {/* Ingredients & allergens */}
         <div className="mt-4 grid grid-cols-2 gap-3">
