@@ -1,5 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Search, Sparkles, Heart, Flame, Candy, Leaf, Landmark, Wallet, Coffee } from "lucide-react";
+import {
+  ArrowRight,
+  Search,
+  Sparkles,
+  Heart,
+  Flame,
+  Candy,
+  Leaf,
+  Landmark,
+  Wallet,
+  Coffee,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { products, categories, tasteFilters, type Taste } from "@/data/products";
 import { useStore } from "@/lib/store";
@@ -8,6 +19,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
 import { LangSwitch } from "@/components/lang-switch";
 import heroImg from "@/assets/hero-coffee.jpg";
+import logoImg from "@/assets/logo.png";
 
 const tasteIcons: Record<Taste, React.ComponentType<{ className?: string }>> = {
   popular: Flame,
@@ -22,7 +34,10 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Brown Sugar — Digital Café Menu" },
-      { name: "description", content: "Scan, browse, and discover our handcrafted coffee, desserts, and drinks." },
+      {
+        name: "description",
+        content: "Scan, browse, and discover our handcrafted coffee, desserts, and drinks.",
+      },
     ],
   }),
   component: Home,
@@ -38,7 +53,6 @@ function Home() {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const userScrollingRef = useRef(false);
 
-  // Auto-update active category as user scrolls through sections
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -57,7 +71,6 @@ function Home() {
     return () => observer.disconnect();
   }, []);
 
-  // Keep the active tab visible in the horizontal scroller
   useEffect(() => {
     const el = tabRefs.current[activeCat];
     if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
@@ -67,7 +80,9 @@ function Home() {
     setActiveCat(id);
     userScrollingRef.current = true;
     sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.setTimeout(() => { userScrollingRef.current = false; }, 800);
+    window.setTimeout(() => {
+      userScrollingRef.current = false;
+    }, 800);
   };
 
   return (
@@ -75,25 +90,40 @@ function Home() {
       <div className="mx-auto max-w-md px-5 pt-[max(1rem,env(safe-area-inset-top))]">
         {/* Header */}
         <header className="flex items-center justify-between py-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{translations.tagline[lang]}</p>
-            <h1 className="font-display text-2xl font-bold text-gradient-gold">{translations.appName[lang]}</h1>
+          <div className="flex items-center gap-3">
+            <img src={logoImg} alt="Brown Sugar Coffee" className="h-12 w-12 object-contain" />
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                {translations.tagline[lang]}
+              </p>
+              <h1 className="font-display text-2xl font-bold text-gold animate-soft-float">
+                {translations.appName[lang]}
+              </h1>
+            </div>
           </div>
           <LangSwitch />
         </header>
 
         {/* Hero */}
-        <section className="relative mt-2 overflow-hidden rounded-[2rem]">
-          <img src={heroImg} alt="Signature latte" className="h-72 w-full object-cover" width={1024} height={1024} />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-6">
+        <section className="relative mt-3 overflow-hidden rounded-[2rem]">
+          <img
+            src={heroImg}
+            alt="Signature latte"
+            className="h-80 w-full object-cover"
+            width={1024}
+            height={1024}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 px-6 pb-7 pt-6">
             <p className="text-xs uppercase tracking-[0.25em] text-gold">{t("discover", lang)}</p>
-            <h2 className="mt-1 font-display text-3xl font-bold leading-tight">
-              Cozy sips,<br />crafted just for you.
+            <h2 className="mt-1.5 font-display text-4xl font-bold leading-[1.1]">
+              Cozy sips,
+              <br />
+              crafted just for you.
             </h2>
             <Link
               to="/menu"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] transition active:scale-95"
+              className="mt-5 inline-flex items-center gap-2.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
             >
               {t("browseMenu", lang)} <ArrowRight className="h-4 w-4" />
             </Link>
@@ -103,37 +133,40 @@ function Home() {
         {/* Search */}
         <Link
           to="/menu"
-          className="glass mt-5 flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm text-muted-foreground"
+          className="glass mt-6 flex items-center gap-3 rounded-2xl px-4 py-4 text-sm text-muted-foreground transition hover:ring-1 hover:ring-gold/20"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-4 w-4" strokeWidth={1.5} />
           {t("search", lang)}
         </Link>
       </div>
 
-      {/* Sticky text-only Category scroller */}
-      <div className="sticky top-0 z-30 mt-5 bg-background/85 backdrop-blur-xl">
+      {/* Sticky Category scroller */}
+      <div className="sticky top-0 z-30 mt-6 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto max-w-md">
-          <nav className="scrollbar-hide flex gap-6 overflow-x-auto px-5 py-3" aria-label="Categories">
+          <nav
+            className="scrollbar-hide scroll-fade-x flex gap-7 overflow-x-auto px-5 py-3.5"
+            aria-label="Categories"
+          >
             {catList.map((c) => {
               const active = activeCat === c.id;
               return (
                 <button
                   key={c.id}
-                  ref={(el) => { tabRefs.current[c.id] = el; }}
+                  ref={(el) => {
+                    tabRefs.current[c.id] = el;
+                  }}
                   onClick={() => scrollToCat(c.id)}
                   className="relative shrink-0 py-1 text-base transition"
                 >
                   <span
                     className={`font-display tracking-tight transition-all ${
-                      active
-                        ? "font-bold text-foreground"
-                        : "font-normal text-muted-foreground/80"
+                      active ? "font-bold text-foreground" : "font-normal text-muted-foreground/80"
                     }`}
                   >
                     {c.name[lang]}
                   </span>
                   {active && (
-                    <span className="absolute left-1/2 -bottom-0.5 h-1 w-1 -translate-x-1/2 rounded-full bg-gold" />
+                    <span className="absolute inset-x-1 -bottom-0.5 h-0.5 rounded-full bg-gold transition-all" />
                   )}
                 </button>
               );
@@ -144,16 +177,21 @@ function Home() {
 
       <div className="mx-auto max-w-md px-5">
         {/* Customer favorites */}
-        <section className="mt-5">
+        <section className="mt-7">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <Heart className="h-4 w-4 fill-accent text-accent" /> {t("popular", lang)}
+            <h3 className="flex items-center gap-2.5 font-display text-xl font-semibold">
+              <Heart className="h-5 w-5 fill-accent text-accent" /> {t("popular", lang)}
             </h3>
-            <Link to="/menu" className="text-xs text-muted-foreground">See all</Link>
+            <Link
+              to="/menu"
+              className="text-xs font-medium text-gold/70 transition hover:text-gold"
+            >
+              See all
+            </Link>
           </div>
-          <div className="scrollbar-hide -mx-5 flex gap-3 overflow-x-auto px-5 pb-2">
+          <div className="scrollbar-hide -mx-5 flex gap-3.5 overflow-x-auto px-5 pb-2">
             {favorites.map((p, i) => (
-              <div key={p.id} className="w-[160px] shrink-0">
+              <div key={p.id} className="w-[170px] shrink-0">
                 <ProductCard product={p} index={i} />
               </div>
             ))}
@@ -161,13 +199,13 @@ function Home() {
         </section>
 
         {/* Taste filters */}
-        <section className="mt-7">
+        <section className="mt-9">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
-              <Sparkles className="h-4 w-4 text-gold" /> {t("discover", lang)}
+            <h3 className="flex items-center gap-2.5 font-display text-xl font-semibold">
+              <Sparkles className="h-5 w-5 text-gold" /> {t("discover", lang)}
             </h3>
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-3">
             {tasteFilters.map((f) => {
               const Icon = tasteIcons[f.id];
               return (
@@ -175,13 +213,15 @@ function Home() {
                   key={f.id}
                   to="/menu"
                   search={{ taste: f.id }}
-                  className="glass flex items-center gap-3 rounded-2xl p-3.5 text-start transition active:scale-[0.97]"
+                  className="bg-surface border border-border/20 flex items-center gap-3.5 rounded-2xl p-4 text-start transition active:scale-[0.97] hover:-translate-y-0.5"
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-gold">
-                    <Icon className="h-5 w-5" />
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-surface text-gold">
+                    <Icon className="h-5 w-5" strokeWidth={1.5} />
                   </span>
                   <div className="min-w-0">
-                    <div className="truncate font-display text-sm font-semibold">{f.label[lang]}</div>
+                    <div className="truncate font-display text-sm font-semibold">
+                      {f.label[lang]}
+                    </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">
                       {products.filter((p) => p.tastes.includes(f.id)).length} items
                     </div>
@@ -192,8 +232,7 @@ function Home() {
           </div>
         </section>
 
-
-        {/* Category sections — drive the sticky scroller */}
+        {/* Category sections */}
         {catList.map((c) => {
           const items = products.filter((p) => p.category === c.id);
           if (items.length === 0) return null;
@@ -201,16 +240,22 @@ function Home() {
             <section
               key={c.id}
               data-cat-id={c.id}
-              ref={(el) => { sectionRefs.current[c.id] = el; }}
-              className="mt-10 scroll-mt-20"
+              ref={(el) => {
+                sectionRefs.current[c.id] = el;
+              }}
+              className="mt-12 scroll-mt-20"
             >
-              <div className="mb-4 flex items-end justify-between">
+              <div className="mb-5 flex items-end justify-between">
                 <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
-                <Link to="/menu" search={{ cat: c.id }} className="text-xs text-muted-foreground">
+                <Link
+                  to="/menu"
+                  search={{ cat: c.id }}
+                  className="text-xs font-medium text-gold/70 transition hover:text-gold"
+                >
                   See all
                 </Link>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {items.slice(0, 6).map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} />
                 ))}

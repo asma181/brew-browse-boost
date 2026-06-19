@@ -22,19 +22,30 @@ export function ProductCard({ product, index = 0, variant = "default" }: Props) 
         className="group block animate-float-up"
         style={{ animationDelay: `${index * 40}ms` }}
       >
-        <article className="glass flex gap-3 overflow-hidden rounded-3xl p-3 transition active:scale-[0.98]">
-          <div className="relative aspect-square h-24 shrink-0 overflow-hidden rounded-2xl bg-surface">
-            <img src={product.image} alt={product.name[lang]} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-105" />
+        <article className="glass flex gap-4 overflow-hidden rounded-3xl p-3.5 card-hover-lift transition active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
+          <div className="relative aspect-square h-28 shrink-0 overflow-hidden rounded-2xl bg-surface border border-border/20">
+            <img
+              src={product.image}
+              alt={product.name[lang]}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
           </div>
           <div className="flex min-w-0 flex-1 flex-col justify-between py-1">
             <div className="min-w-0">
-              <h3 className="truncate font-display text-lg font-semibold leading-tight">{product.name[lang]}</h3>
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{product.description[lang]}</p>
+              <h3 className="truncate font-display text-lg font-semibold leading-tight">
+                {product.name[lang]}
+              </h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                {product.description[lang]}
+              </p>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="font-display text-xl font-bold text-gradient-gold">{product.price.toFixed(3)} DT</span>
+              <span className="font-display text-xl font-bold text-gold">
+                {product.price.toFixed(3)} DT
+              </span>
               <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Star className="h-3.5 w-3.5 fill-gold text-gold" />
+                <Star className="h-3.5 w-3.5 fill-gold text-gold" strokeWidth={1.5} />
                 {rating.toFixed(1)}
               </span>
             </div>
@@ -51,32 +62,45 @@ export function ProductCard({ product, index = 0, variant = "default" }: Props) 
       className="group block animate-float-up"
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      <article className="glass relative overflow-hidden rounded-3xl p-2.5 transition active:scale-[0.98]">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-surface">
-          <img src={product.image} alt={product.name[lang]} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+      <article className="glass relative overflow-hidden rounded-3xl p-3 card-hover-lift transition active:scale-[0.97] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-surface shadow-inner">
+          <img
+            src={product.image}
+            alt={product.name[lang]}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <button
             type="button"
-            onClick={(e) => { e.preventDefault(); toggleFav(product.id); }}
-            className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-full bg-background/60 backdrop-blur transition active:scale-90"
+            onClick={(e) => {
+              e.preventDefault();
+              toggleFav(product.id);
+            }}
+            className="absolute right-2.5 top-2.5 grid h-10 w-10 place-items-center rounded-full bg-background/60 backdrop-blur-lg transition active:scale-90 hover:bg-background/80"
             aria-label="favorite"
           >
-            <Heart className={`h-4 w-4 ${isFav(product.id) ? "fill-accent text-accent" : "text-cream"}`} />
+            <Heart
+              className={`h-4 w-4 ${isFav(product.id) ? "fill-accent text-accent" : "text-cream"}`}
+              strokeWidth={1.5}
+            />
           </button>
-          {product.trending && (
-            <span className="absolute left-2 top-2 rounded-full bg-gold px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-background">
-              Hot
-            </span>
-          )}
         </div>
-        <div className="px-1 pb-1 pt-3">
+        <div className="px-1.5 pb-2 pt-3.5">
           <div className="flex items-center justify-between gap-1">
-            <h3 className="truncate font-display text-base font-semibold leading-tight">{product.name[lang]}</h3>
+            <h3 className="truncate font-display text-[15px] font-semibold leading-snug">
+              {product.name[lang]}
+            </h3>
           </div>
-          <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{product.description[lang]}</p>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="font-display text-lg font-bold text-gradient-gold">{product.price.toFixed(3)} DT</span>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
+            {product.description[lang]}
+          </p>
+          <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-2.5">
+            <span className="font-display text-lg font-bold text-gold">
+              {product.price.toFixed(3)} DT
+            </span>
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Star className="h-3 w-3 fill-gold text-gold" />
+              <Star className="h-3 w-3 fill-gold text-gold" strokeWidth={1.5} />
               {rating.toFixed(1)}
             </span>
           </div>
