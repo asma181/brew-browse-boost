@@ -27,6 +27,7 @@ export interface Review {
 interface StoreCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
+  sessionId: string;
   cart: CartItem[];
   addToCart: (id: string) => void;
   setQty: (id: string, qty: number) => void;
@@ -58,12 +59,15 @@ function save(key: string, value: unknown) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch (err) {
+    console.error("Storage save failed:", err);
+  }
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [lang, setLangState] = useState<Lang>("en");
+  const [sessionId, setSessionId] = useState<string>("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
@@ -77,6 +81,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setRatings(load(LS.ratings, {}));
     setReviews(load(LS.reviews, []));
     setViews(load(LS.views, {}));
+
+    let sid = localStorage.getItem("bs.session_id");
+    if (!sid) {
+      sid =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("bs.session_id", sid);
+    }
+    setSessionId(sid);
+
     setHydrated(true);
   }, []);
 
@@ -107,6 +122,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value: StoreCtx = {
     lang,
     setLang: setLangState,
+    sessionId,
     cart,
     addToCart: (id) =>
       setCart((prev) => {

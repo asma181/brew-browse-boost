@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus, Minus, Trash2, Coffee, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getProduct, products } from "@/data/products";
+import { productName } from "@/lib/product-text";
+import { useProducts } from "@/hooks/useProducts";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
@@ -15,16 +16,19 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const { lang, cart, setQty, removeFromCart, clearCart } = useStore();
+  const { products, loading } = useProducts();
   const [showSummary, setShowSummary] = useState(false);
 
-  const items = cart.map((c) => ({ ...c, product: getProduct(c.id)! })).filter((i) => i.product);
+  const items = cart
+    .map((c) => ({ ...c, product: products.find((p) => p.id === c.id) }))
+    .filter((i) => i.product !== undefined);
 
   const total = items.reduce((sum, i) => sum + i.product.price * i.qty, 0);
   const count = items.reduce((sum, i) => sum + i.qty, 0);
 
   const suggestions = products
     .filter((p) => !cart.find((c) => c.id === p.id))
-    .sort((a, b) => b.baseRating - a.baseRating)
+    .sort((a, b) => b.base_rating - a.base_rating)
     .slice(0, 4);
 
   return (
@@ -51,7 +55,11 @@ function CartPage() {
           )}
         </header>
 
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="glass mt-10 rounded-3xl p-10 text-center">
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
             <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-surface-elevated">
               <Coffee
@@ -81,15 +89,15 @@ function CartPage() {
                 >
                   <Link to="/product/$id" params={{ id: i.id }} className="shrink-0">
                     <img
-                      src={i.product.image}
-                      alt={i.product.name[lang]}
+                      src={i.product.image_url}
+                      alt={productName(i.product, lang)}
                       className="h-24 w-24 rounded-2xl object-cover transition hover:scale-105"
                     />
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
                     <div className="min-w-0">
                       <h3 className="truncate font-display text-[15px] font-semibold leading-snug">
-                        {i.product.name[lang]}
+                        {productName(i.product, lang)}
                       </h3>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {i.product.price.toFixed(3)} DT {t("qty", lang).toLowerCase()}
@@ -186,7 +194,7 @@ function CartPage() {
                 <div key={i.id} className="flex items-center justify-between text-sm">
                   <span className="flex items-baseline gap-2.5">
                     <strong className="font-display text-base text-gold">{i.qty}×</strong>
-                    <span>{i.product.name[lang]}</span>
+                    <span>{productName(i.product, lang)}</span>
                   </span>
                   <span className="font-mono text-muted-foreground">
                     {(i.product.price * i.qty).toFixed(3)} DT

@@ -1,13 +1,19 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Search, X, ArrowLeft, Flame, Candy, Leaf, Landmark, Wallet, Coffee } from "lucide-react";
 import { useMemo } from "react";
-import { products, categories, tasteFilters, type Taste } from "@/data/products";
+import { categories, tasteFilters } from "@/lib/product-metadata";
+import { productDescription, productName } from "@/lib/product-text";
+import { useProducts } from "@/hooks/useProducts";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
+import type { Taste } from "@/types/product";
 
-const tasteIcons: Record<Taste, React.ComponentType<{ className?: string }>> = {
+const tasteIcons: Record<
+  Taste,
+  React.ComponentType<{ className?: string; strokeWidth?: number }>
+> = {
   popular: Flame,
   sweet: Candy,
   healthy: Leaf,
@@ -87,6 +93,7 @@ export const Route = createFileRoute("/menu")({
 
 function Menu() {
   const { lang } = useStore();
+  const { products, loading } = useProducts();
   const navigate = useNavigate({ from: "/menu" });
   const { q = "", cat, taste } = Route.useSearch();
 
@@ -97,14 +104,14 @@ function Menu() {
       if (q) {
         const needle = q.toLowerCase();
         return (
-          p.name[lang].toLowerCase().includes(needle) ||
-          p.description[lang].toLowerCase().includes(needle) ||
+          productName(p, lang).toLowerCase().includes(needle) ||
+          productDescription(p, lang).toLowerCase().includes(needle) ||
           p.id.includes(needle)
         );
       }
       return true;
     });
-  }, [q, cat, taste, lang]);
+  }, [products, q, cat, taste, lang]);
 
   const setSearch = (next: Partial<MenuSearch>) =>
     navigate({ search: (prev: MenuSearch) => ({ ...prev, ...next }) });
@@ -230,7 +237,11 @@ function Menu() {
           <p className="mb-4 inline-flex items-center rounded-full bg-surface-elevated px-3 py-1 text-[11px] font-medium text-muted-foreground">
             {filtered.length} {t("items", lang)}
           </p>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="glass mt-10 rounded-3xl p-10 text-center">
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="glass mt-10 rounded-3xl p-10 text-center">
               <Coffee
                 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50"

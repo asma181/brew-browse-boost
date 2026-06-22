@@ -12,12 +12,14 @@ import {
   Coffee,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { products, categories, tasteFilters, type Taste } from "@/data/products";
+import { categories, tasteFilters } from "@/lib/product-metadata";
+import { useProducts } from "@/hooks/useProducts";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
 import { LangSwitch } from "@/components/lang-switch";
+import type { Taste } from "@/types/product";
 import heroImg from "@/assets/hero-coffee.jpg";
 import logoImg from "@/assets/logo.png";
 
@@ -45,7 +47,8 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { lang } = useStore();
-  const favorites = [...products].sort((a, b) => b.baseRating - a.baseRating).slice(0, 6);
+  const { products, loading } = useProducts();
+  const favorites = [...products].sort((a, b) => b.base_rating - a.base_rating).slice(0, 6);
 
   const catList = categories.filter((c) => c.id !== "all");
   const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
@@ -190,11 +193,15 @@ function Home() {
             </Link>
           </div>
           <div className="scrollbar-hide -mx-5 flex gap-3.5 overflow-x-auto px-5 pb-2">
-            {favorites.map((p, i) => (
-              <div key={p.id} className="w-[170px] shrink-0">
-                <ProductCard product={p} index={i} />
-              </div>
-            ))}
+            {loading ? (
+              <p className="px-5 py-6 text-sm text-muted-foreground">Loading...</p>
+            ) : (
+              favorites.map((p, i) => (
+                <div key={p.id} className="w-[170px] shrink-0">
+                  <ProductCard product={p} index={i} />
+                </div>
+              ))
+            )}
           </div>
         </section>
 
@@ -233,36 +240,37 @@ function Home() {
         </section>
 
         {/* Category sections */}
-        {catList.map((c) => {
-          const items = products.filter((p) => p.category === c.id);
-          if (items.length === 0) return null;
-          return (
-            <section
-              key={c.id}
-              data-cat-id={c.id}
-              ref={(el) => {
-                sectionRefs.current[c.id] = el;
-              }}
-              className="mt-12 scroll-mt-20"
-            >
-              <div className="mb-5 flex items-end justify-between">
-                <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
-                <Link
-                  to="/menu"
-                  search={{ cat: c.id }}
-                  className="text-xs font-medium text-gold/70 transition hover:text-gold"
-                >
-                  See all
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {items.slice(0, 6).map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {!loading &&
+          catList.map((c) => {
+            const items = products.filter((p) => p.category === c.id);
+            if (items.length === 0) return null;
+            return (
+              <section
+                key={c.id}
+                data-cat-id={c.id}
+                ref={(el) => {
+                  sectionRefs.current[c.id] = el;
+                }}
+                className="mt-12 scroll-mt-20"
+              >
+                <div className="mb-5 flex items-end justify-between">
+                  <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
+                  <Link
+                    to="/menu"
+                    search={{ cat: c.id }}
+                    className="text-xs font-medium text-gold/70 transition hover:text-gold"
+                  >
+                    See all
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {items.slice(0, 6).map((p, i) => (
+                    <ProductCard key={p.id} product={p} index={i} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
       </div>
 
       <BottomNav />

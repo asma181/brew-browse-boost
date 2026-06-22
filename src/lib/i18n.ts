@@ -1,4 +1,4 @@
-import type { Lang } from "@/data/products";
+import type { Lang } from "@/types/product";
 
 export const translations = {
   appName: { en: "Brown Sugar", fr: "Brown Sugar", ar: "براون شوغر" },
@@ -39,6 +39,11 @@ export const translations = {
   },
   submit: { en: "Submit review", fr: "Envoyer", ar: "إرسال" },
   noReviews: { en: "Be the first to review", fr: "Soyez le premier", ar: "كن الأول" },
+  you: { en: "You", fr: "Vous", ar: "أنت" },
+  customer: { en: "Customer", fr: "Client", ar: "عميل" },
+  enterName: { en: "Enter your name", fr: "Entrez votre nom", ar: "أدخل اسمك" },
+  namePlaceholder: { en: "Your name", fr: "Votre nom", ar: "اسمك" },
+  confirm: { en: "Confirm", fr: "Confirmer", ar: "تأكيد" },
   back: { en: "Back", fr: "Retour", ar: "رجوع" },
   qty: { en: "Qty", fr: "Qté", ar: "كمية" },
   remove: { en: "Remove", fr: "Retirer", ar: "حذف" },
@@ -59,9 +64,10 @@ export const translations = {
 } as const;
 
 export function t<K extends keyof typeof translations>(key: K, lang: Lang): string {
-  const v = translations[key];
-  if (Array.isArray((v as any)[lang])) return ((v as any)[lang] as string[]).join(", ");
-  return (v as any)[lang] as string;
+  const v = translations[key] as unknown as Record<Lang, string | readonly string[]>;
+  const val = v[lang];
+  if (Array.isArray(val)) return val.join(", ");
+  return val as string;
 }
 
 export const langNames: Record<Lang, string> = { en: "English", fr: "Français", ar: "العربية" };

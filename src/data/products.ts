@@ -49,7 +49,11 @@ export const categories: Category[] = [
   { id: "tacos", name: { en: "Tacos", fr: "Tacos", ar: "تاكوس" }, icon: "Sandwich" },
   { id: "omelette", name: { en: "Omelette", fr: "Omelette", ar: "أومليت" }, icon: "EggFried" },
   { id: "burger", name: { en: "Burger", fr: "Burger", ar: "برغر" }, icon: "Beef" },
-  { id: "tea-chill", name: { en: "Tea and Chill", fr: "Tea and Chill", ar: "Tea and Chill" }, icon: "Leaf" },
+  {
+    id: "tea-chill",
+    name: { en: "Tea and Chill", fr: "Tea and Chill", ar: "Tea and Chill" },
+    icon: "Leaf",
+  },
   { id: "juices", name: { en: "Fresh Juices", fr: "Jus Frais", ar: "عصائر" }, icon: "GlassWater" },
   { id: "smoothies", name: { en: "Smoothies", fr: "Smoothies", ar: "سموثي" }, icon: "CupSoda" },
 ];

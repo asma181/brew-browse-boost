@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Heart } from "lucide-react";
-import { getProduct } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
@@ -13,9 +13,10 @@ export const Route = createFileRoute("/favorites")({
 
 function FavoritesPage() {
   const { lang, favorites } = useStore();
-  const items = favorites.map((id) => getProduct(id)).filter(Boolean) as NonNullable<
-    ReturnType<typeof getProduct>
-  >[];
+  const { products, loading } = useProducts();
+  const items = favorites
+    .map((id) => products.find((p) => p.id === id))
+    .filter((product) => product !== undefined);
 
   return (
     <div className="min-h-screen pb-28">
@@ -30,7 +31,11 @@ function FavoritesPage() {
           <h1 className="font-display text-2xl font-bold">{t("favorites", lang)}</h1>
         </header>
 
-        {items.length === 0 ? (
+        {loading ? (
+          <div className="glass mt-10 rounded-3xl p-10 text-center">
+            <p className="text-sm text-muted-foreground">Loading...</p>
+          </div>
+        ) : items.length === 0 ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
             <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-surface-elevated">
               <Heart

@@ -1,6 +1,6 @@
 import { useStore } from "@/lib/store";
 import { langNames } from "@/lib/i18n";
-import type { Lang } from "@/data/products";
+import type { Lang } from "@/types/product";
 import { Globe } from "lucide-react";
 import { useState } from "react";
 
