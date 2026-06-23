@@ -48,7 +48,7 @@ function CartPage() {
                 clearCart();
                 toast.success("List cleared");
               }}
-              className="ms-auto text-xs font-medium text-muted-foreground transition hover:text-accent"
+              className="ms-auto font-display text-xs font-medium text-muted-foreground transition hover:text-accent"
             >
               {t("clearList", lang)}
             </button>
@@ -73,7 +73,7 @@ function CartPage() {
             </p>
             <Link
               to="/menu"
-              className="mt-6 inline-flex rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
+              className="mt-6 inline-flex rounded-full bg-primary px-6 py-3 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
             >
               {t("browseMenu", lang)}
             </Link>
@@ -150,7 +150,7 @@ function CartPage() {
               </div>
               <button
                 onClick={() => setShowSummary(true)}
-                className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary py-4 text-sm font-bold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-[0.98]"
+                className="mt-6 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-primary py-4 font-display text-sm font-bold tracking-wide text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-[0.98]"
               >
                 <Check className="h-4 w-4" />
                 {t("showWaiter", lang)}
@@ -212,7 +212,7 @@ function CartPage() {
             </div>
             <button
               onClick={() => setShowSummary(false)}
-              className="mt-6 w-full rounded-2xl bg-surface-elevated py-3.5 text-sm font-semibold text-muted-foreground transition hover:bg-surface"
+              className="mt-6 w-full rounded-2xl bg-surface-elevated py-3.5 font-display text-sm font-semibold tracking-wide text-muted-foreground transition hover:bg-surface"
             >
               Close
             </button>

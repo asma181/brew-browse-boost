@@ -4,11 +4,13 @@ import { useMemo } from "react";
 import { categories, tasteFilters } from "@/lib/product-metadata";
 import { productDescription, productName } from "@/lib/product-text";
 import { useProducts } from "@/hooks/useProducts";
+import { useCategoryNav } from "@/hooks/useCategoryNav";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
-import type { Taste } from "@/types/product";
+import { CategorySection } from "@/components/category-section";
+import type { Product, Taste } from "@/types/product";
 
 const tasteIcons: Record<
   Taste,
@@ -117,8 +119,42 @@ function Menu() {
     navigate({ search: (prev: MenuSearch) => ({ ...prev, ...next }) });
 
   const catList = categories.filter((c) => c.id !== "all");
-  const activeCat = cat ?? "all";
   const activeGroups = cat ? menuGroups[cat] : undefined;
+
+  const catIds = ["all", ...catList.map((c) => c.id)];
+  const observerEnabled = !cat && !loading;
+  const nav = useCategoryNav(catIds, observerEnabled);
+
+  const scrollToCat = (id: string) => {
+    if (cat) {
+      setSearch({ cat: id === cat ? undefined : id });
+      return;
+    }
+    if (id === "all") {
+      window.scrollTo({ behavior: "smooth", top: 0 });
+      return;
+    }
+    nav.setActiveCat(id);
+    nav.userScrollingRef.current = true;
+    nav.sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      nav.userScrollingRef.current = false;
+    }, 800);
+  };
+
+  const activeTabId = cat ?? nav.activeCat;
+
+  // Group filtered products by category for the All view
+  const groupedByCat = useMemo(() => {
+    if (cat) return null;
+    const map = new Map<string, Product[]>();
+    for (const p of filtered) {
+      const list = map.get(p.category) ?? [];
+      list.push(p);
+      map.set(p.category, list);
+    }
+    return map;
+  }, [filtered, cat]);
 
   return (
     <div className="min-h-screen pb-28">
@@ -191,28 +227,31 @@ function Menu() {
             aria-label="Categories"
           >
             <button
-              onClick={() => setSearch({ cat: undefined })}
+              onClick={() => scrollToCat("all")}
               className="relative shrink-0 py-1 text-base transition"
             >
               <span
                 className={`font-display tracking-tight transition-all ${
-                  activeCat === "all"
+                  activeTabId === "all"
                     ? "font-bold text-foreground"
                     : "font-normal text-muted-foreground/80"
                 }`}
               >
                 {categories[0].name[lang]}
               </span>
-              {activeCat === "all" && (
+              {activeTabId === "all" && (
                 <span className="absolute inset-x-1 -bottom-0.5 h-0.5 rounded-full bg-gold transition-all" />
               )}
             </button>
             {catList.map((c) => {
-              const active = activeCat === c.id;
+              const active = activeTabId === c.id;
               return (
                 <button
                   key={c.id}
-                  onClick={() => setSearch({ cat: active ? undefined : c.id })}
+                  ref={(el) => {
+                    nav.tabRefs.current[c.id] = el;
+                  }}
+                  onClick={() => scrollToCat(c.id)}
                   className="relative shrink-0 py-1 text-base transition"
                 >
                   <span
@@ -249,25 +288,64 @@ function Menu() {
               />
               <p className="text-sm text-muted-foreground">{t("noResults", lang)}</p>
             </div>
+          ) : !cat ? (
+            // All view: sequential category sections
+            catList.map((c) => {
+              const items = groupedByCat?.get(c.id) ?? [];
+              if (items.length === 0) return null;
+              return (
+                <section
+                  key={c.id}
+                  data-cat-id={c.id}
+                  ref={(el) => {
+                    nav.sectionRefs.current[c.id] = el;
+                  }}
+                  className="mt-12 scroll-mt-20"
+                >
+                  <CategorySection category={c} products={items} lang={lang} showSeeAll={false} />
+                </section>
+              );
+            })
           ) : activeGroups ? (
-            <div className="space-y-8">
-              {activeGroups.map((group) => {
-                const groupItems = filtered.filter((p) => group.ids.includes(p.id));
-                if (groupItems.length === 0) return null;
-                return (
-                  <section key={group.title}>
-                    <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
-                      {group.title}
-                    </h2>
-                    <div className="grid grid-cols-2 gap-4">
-                      {groupItems.map((p, i) => (
-                        <ProductCard key={p.id} product={p} index={i} />
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
-            </div>
+            (() => {
+              const filteredMap = new Map(filtered.map((p) => [p.id, p]));
+              const groupedIds = new Set(activeGroups.flatMap((g) => g.ids));
+              const ungrouped = filtered.filter((p) => !groupedIds.has(p.id));
+              return (
+                <div className="space-y-8">
+                  {activeGroups.map((group) => {
+                    const groupItems = group.ids
+                      .map((id) => filteredMap.get(id))
+                      .filter((p): p is Product => p !== undefined);
+                    if (groupItems.length === 0) return null;
+                    return (
+                      <section key={group.title}>
+                        <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
+                          {group.title}
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                          {groupItems.map((p, i) => (
+                            <ProductCard key={p.id} product={p} index={i} />
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                  {ungrouped.length > 0 && (
+                    <section>
+                      <h2 className="mb-3 font-display text-lg font-semibold tracking-tight">
+                        Other
+                      </h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        {ungrouped.map((p, i) => (
+                          <ProductCard key={p.id} product={p} index={i} />
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </div>
+              );
+            })()
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {filtered.map((p, i) => (

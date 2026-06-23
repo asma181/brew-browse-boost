@@ -11,13 +11,14 @@ import {
   Wallet,
   Coffee,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { categories, tasteFilters } from "@/lib/product-metadata";
 import { useProducts } from "@/hooks/useProducts";
+import { useCategoryNav } from "@/hooks/useCategoryNav";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
 import { ProductCard } from "@/components/product-card";
+import { CategorySection } from "@/components/category-section";
 import { LangSwitch } from "@/components/lang-switch";
 import type { Taste } from "@/types/product";
 import heroImg from "@/assets/hero-coffee.jpg";
@@ -51,40 +52,15 @@ function Home() {
   const favorites = [...products].sort((a, b) => b.base_rating - a.base_rating).slice(0, 6);
 
   const catList = categories.filter((c) => c.id !== "all");
-  const [activeCat, setActiveCat] = useState<string>(catList[0]?.id ?? "");
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const userScrollingRef = useRef(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (userScrollingRef.current) return;
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          const id = (visible.target as HTMLElement).dataset.catId;
-          if (id) setActiveCat(id);
-        }
-      },
-      { rootMargin: "-30% 0px -55% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
-    );
-    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const el = tabRefs.current[activeCat];
-    if (el) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-  }, [activeCat]);
+  const catIds = catList.map((c) => c.id);
+  const nav = useCategoryNav(catIds, !loading);
 
   const scrollToCat = (id: string) => {
-    setActiveCat(id);
-    userScrollingRef.current = true;
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    nav.setActiveCat(id);
+    nav.userScrollingRef.current = true;
+    nav.sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
     window.setTimeout(() => {
-      userScrollingRef.current = false;
+      nav.userScrollingRef.current = false;
     }, 800);
   };
 
@@ -126,7 +102,7 @@ function Home() {
             </h2>
             <Link
               to="/menu"
-              className="mt-5 inline-flex items-center gap-2.5 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
+              className="mt-5 inline-flex items-center gap-2.5 rounded-full bg-primary px-6 py-3 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
             >
               {t("browseMenu", lang)} <ArrowRight className="h-4 w-4" />
             </Link>
@@ -151,12 +127,12 @@ function Home() {
             aria-label="Categories"
           >
             {catList.map((c) => {
-              const active = activeCat === c.id;
+              const active = nav.activeCat === c.id;
               return (
                 <button
                   key={c.id}
                   ref={(el) => {
-                    tabRefs.current[c.id] = el;
+                    nav.tabRefs.current[c.id] = el;
                   }}
                   onClick={() => scrollToCat(c.id)}
                   className="relative shrink-0 py-1 text-base transition"
@@ -189,7 +165,7 @@ function Home() {
               to="/menu"
               className="text-xs font-medium text-gold/70 transition hover:text-gold"
             >
-              See all
+              {t("seeAll", lang)}
             </Link>
           </div>
           <div className="scrollbar-hide -mx-5 flex gap-3.5 overflow-x-auto px-5 pb-2">
@@ -249,25 +225,17 @@ function Home() {
                 key={c.id}
                 data-cat-id={c.id}
                 ref={(el) => {
-                  sectionRefs.current[c.id] = el;
+                  nav.sectionRefs.current[c.id] = el;
                 }}
                 className="mt-12 scroll-mt-20"
               >
-                <div className="mb-5 flex items-end justify-between">
-                  <h3 className="font-display text-2xl font-bold tracking-tight">{c.name[lang]}</h3>
-                  <Link
-                    to="/menu"
-                    search={{ cat: c.id }}
-                    className="text-xs font-medium text-gold/70 transition hover:text-gold"
-                  >
-                    See all
-                  </Link>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {items.slice(0, 6).map((p, i) => (
-                    <ProductCard key={p.id} product={p} index={i} />
-                  ))}
-                </div>
+                <CategorySection
+                  category={c}
+                  products={items}
+                  lang={lang}
+                  maxItems={6}
+                  showSeeAll
+                />
               </section>
             );
           })}

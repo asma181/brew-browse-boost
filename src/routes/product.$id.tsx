@@ -1,5 +1,14 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Heart, Plus, Minus, Star, Leaf, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Plus,
+  Minus,
+  Star,
+  Leaf,
+  AlertTriangle,
+  ShoppingBag,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getProduct } from "@/api/products";
@@ -10,6 +19,8 @@ import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
 import type { Product } from "@/types/product";
 import { useReviews } from "@/hooks/useReviews";
+import { sanitizeReview, isValidReview } from "@/lib/review-validation";
+import { ReviewCard } from "@/components/review-card";
 
 type LoaderData = {
   product: Product;
@@ -37,7 +48,7 @@ export const Route = createFileRoute("/product/$id")({
         <h1 className="font-display text-3xl">Item not found</h1>
         <Link
           to="/menu"
-          className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          className="mt-4 inline-block rounded-full bg-primary px-5 py-2 font-display text-sm font-semibold text-primary-foreground"
         >
           Back to menu
         </Link>
@@ -60,7 +71,7 @@ function ProductErrorComponent({ error, reset }: { error: Error; reset: () => vo
             router.invalidate();
             reset();
           }}
-          className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          className="mt-4 rounded-full bg-primary px-5 py-2 font-display text-sm font-semibold text-primary-foreground"
         >
           Try again
         </button>
@@ -89,10 +100,9 @@ function ProductPage() {
     reviews: dbReviews,
     loading: reviewsLoading,
     error: reviewsError,
+    submitting: reviewSubmitting,
     submitNewReview,
   } = useReviews(product.id);
-  console.log("STORE SESSION:", sessionId);
-  console.log("DB REVIEWS:", dbReviews);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -102,6 +112,9 @@ function ProductPage() {
   const description = productDescription(product, lang);
 
   useEffect(() => {
+    if (!product.id) {
+      console.error("Product has no id:", product);
+    }
     trackView(product.id);
   }, [product.id]); // eslint-disable-line
 
@@ -138,9 +151,17 @@ function ProductPage() {
       return;
     }
 
+    const sanitizedText = sanitizeReview(reviewText);
+    if (!isValidReview(sanitizedText)) {
+      toast.error("Please enter a valid review");
+      return;
+    }
+
     try {
       const commentWithTags =
-        selectedTags.length > 0 ? `[${selectedTags.join(", ")}] ${reviewText}`.trim() : reviewText;
+        selectedTags.length > 0
+          ? `[${selectedTags.join(", ")}] ${sanitizedText}`.trim()
+          : sanitizedText;
 
       await submitNewReview({
         rating: reviewRating,
@@ -159,10 +180,14 @@ function ProductPage() {
     }
   };
 
-  const handleNameConfirm = () => {
+  const handleNameConfirm = async () => {
     if (!customerName.trim()) return;
     setShowNameModal(false);
-    submitReview();
+    try {
+      await submitReview();
+    } catch {
+      setShowNameModal(true);
+    }
   };
 
   return (
@@ -246,12 +271,16 @@ function ProductPage() {
 
         <Section title={t("reviews", lang)}>
           <div className="glass rounded-2xl p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("rate", lang)}
             </p>
             <div className="mt-2 flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} onClick={() => setReviewRating(n)}>
+                <button
+                  key={n}
+                  onClick={() => setReviewRating(n)}
+                  aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                >
                   <Star
                     className={`h-7 w-7 transition ${n <= reviewRating ? "fill-gold text-gold" : "text-muted-foreground"}`}
                     strokeWidth={1.5}
@@ -268,7 +297,7 @@ function ProductPage() {
                       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
                     )
                   }
-                  className={`rounded-full px-3 py-1 text-[11px] font-medium transition ${
+                  className={`rounded-full px-3 py-1 font-display text-[11px] font-medium transition ${
                     selectedTags.includes(tag)
                       ? "bg-primary text-primary-foreground"
                       : "bg-surface-elevated text-muted-foreground"
@@ -282,14 +311,22 @@ function ProductPage() {
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder={t("yourReview", lang)}
-              rows={2}
-              className="mt-3 w-full resize-none rounded-xl bg-surface px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
+              rows={3}
+              maxLength={500}
+              className="mt-3 w-full resize-none break-words rounded-xl bg-surface px-3 py-2.5 font-display text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
             />
             <button
               onClick={submitReview}
-              className="mt-3 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+              disabled={reviewSubmitting}
+              className="mt-3 w-full rounded-xl bg-primary py-2.5 font-display text-sm font-semibold tracking-wide text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
             >
-              {t("submit", lang)}
+              {reviewSubmitting
+                ? lang === "fr"
+                  ? "Envoi..."
+                  : lang === "ar"
+                    ? "جاري الإرسال..."
+                    : "Submitting..."
+                : t("submit", lang)}
             </button>
           </div>
 
@@ -300,55 +337,28 @@ function ProductPage() {
               Error: {reviewsError}
             </div>
           ) : dbReviews.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {dbReviews.map((r) => {
-                const author =
-                  r.session_id === sessionId ? t("you", lang) : r.name || t("customer", lang);
+            <div className="mt-3">
+              {dbReviews.map((r, idx) => {
+                const isOwnReview = r.session_id === sessionId;
+                const author = isOwnReview ? t("you", lang) : r.name || t("customer", lang);
                 const formattedDate = new Date(r.created_at).toLocaleDateString(
                   lang === "ar" ? "ar-EG" : lang === "fr" ? "fr-FR" : "en-US",
                   { year: "numeric", month: "short", day: "numeric" },
                 );
 
-                let cleanComment = r.comment || "";
-                let parsedTags: string[] = [];
-                const tagMatch = cleanComment.match(/^\[(.*?)\]\s*(.*)$/);
-                if (tagMatch) {
-                  parsedTags = tagMatch[1].split(",").map((t) => t.trim());
-                  cleanComment = tagMatch[2];
-                }
-
                 return (
-                  <div key={r.id} className="glass rounded-2xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <strong className="text-sm">{author}</strong>
-                        <span className="text-[10px] text-muted-foreground">{formattedDate}</span>
-                      </div>
-                      <span className="flex items-center gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 ${i < r.rating ? "fill-gold text-gold" : "text-muted-foreground"}`}
-                            strokeWidth={1.5}
-                          />
-                        ))}
-                      </span>
-                    </div>
-                    {cleanComment && (
-                      <p className="mt-2 text-sm text-muted-foreground">{cleanComment}</p>
-                    )}
-                    {parsedTags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {parsedTags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] text-muted-foreground"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <div
+                    key={r.id}
+                    className="animate-float-up"
+                    style={{ animationDelay: `${idx * 60}ms` }}
+                  >
+                    {idx > 0 && <div className="mx-2 border-t border-border/10" />}
+                    <ReviewCard
+                      review={r}
+                      isOwnReview={isOwnReview}
+                      author={author}
+                      formattedDate={formattedDate}
+                    />
                   </div>
                 );
               })}
@@ -397,7 +407,7 @@ function ProductPage() {
                   addToCart(product.id);
                   toast.success(`${name} added`);
                 }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary py-3.5 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_4px_14px_-4px_oklch(0.55_0.08_45/0.5)] transition hover:shadow-[0_6px_20px_-6px_oklch(0.55_0.08_45/0.6)] active:scale-[0.98]"
               >
                 <Plus className="h-4 w-4" strokeWidth={1.5} />
                 {t("addToList", lang)}
@@ -405,8 +415,9 @@ function ProductPage() {
             )}
             <Link
               to="/cart"
-              className="rounded-2xl bg-gold px-4 py-3 text-sm font-bold text-background"
+              className="flex items-center gap-2 rounded-2xl bg-gold px-4 py-3.5 font-display text-sm font-bold tracking-wide text-background transition hover:bg-gold/90 active:scale-[0.98]"
             >
+              <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
               {t("cart", lang)}
             </Link>
           </div>
@@ -435,7 +446,7 @@ function ProductPage() {
             <button
               onClick={handleNameConfirm}
               disabled={!customerName.trim()}
-              className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
+              className="mt-4 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold tracking-wide text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
             >
               {t("confirm", lang)}
             </button>

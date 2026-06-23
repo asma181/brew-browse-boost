@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { sanitizeReview, sanitizeName } from "@/lib/review-validation";
 function safeUUID() {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -28,7 +29,7 @@ export async function createOrGetSession(lang?: string): Promise<string> {
     .maybeSingle();
 
   if (selectError) {
-    console.error(selectError.message);
+    console.error("session select error:", selectError.message);
   }
 
   // always try insert safely
@@ -37,6 +38,7 @@ export async function createOrGetSession(lang?: string): Promise<string> {
     client_sid: sessionId,
     fingerprint: sessionId,
     lang: lang ?? "en",
+    first_seen: new Date().toISOString(),
     last_seen: new Date().toISOString(),
   });
 
@@ -78,7 +80,17 @@ export async function addReview({
   name?: string;
   lang?: string;
 }) {
+  if (!productId) {
+    throw new Error("Cannot submit review: product_id is missing");
+  }
+  if (!rating || rating < 1 || rating > 5) {
+    throw new Error("Cannot submit review: rating must be between 1 and 5");
+  }
+
   const sessionId = await createOrGetSession(lang);
+
+  const sanitizedComment = comment ? sanitizeReview(comment) : null;
+  const sanitizedName = name ? sanitizeName(name) : null;
 
   const { data, error } = await supabase
     .from("reviews")
@@ -86,15 +98,15 @@ export async function addReview({
       product_id: productId,
       session_id: sessionId,
       rating,
-      comment: comment ?? null,
-      name: name ?? null,
+      comment: sanitizedComment,
+      name: sanitizedName,
       lang: lang || "en",
     })
     .select()
     .single();
 
   if (error) {
-    console.error("addReview error:", error.message);
+    console.error("addReview error:", error.message, JSON.stringify(error));
     throw error;
   }
 

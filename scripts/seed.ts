@@ -51,7 +51,7 @@ async function seed() {
     return;
   }
 
-  console.log("Seeding done successfully 🚀");
+  console.log("Seeding done successfully ");
 }
 
 seed();

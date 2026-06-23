@@ -33,8 +33,8 @@ export const translations = {
   reviews: { en: "Reviews", fr: "Avis", ar: "التقييمات" },
   rate: { en: "Rate this item", fr: "Notez", ar: "قيّم" },
   yourReview: {
-    en: "Share your thoughts (optional)",
-    fr: "Votre avis (optionnel)",
+    en: "Share your thoughts ",
+    fr: "Votre avis ",
     ar: "شاركنا رأيك",
   },
   submit: { en: "Submit review", fr: "Envoyer", ar: "إرسال" },
@@ -44,6 +44,7 @@ export const translations = {
   enterName: { en: "Enter your name", fr: "Entrez votre nom", ar: "أدخل اسمك" },
   namePlaceholder: { en: "Your name", fr: "Votre nom", ar: "اسمك" },
   confirm: { en: "Confirm", fr: "Confirmer", ar: "تأكيد" },
+  seeAll: { en: "See all", fr: "Voir tout", ar: "عرض الكل" },
   back: { en: "Back", fr: "Retour", ar: "رجوع" },
   qty: { en: "Qty", fr: "Qté", ar: "كمية" },
   remove: { en: "Remove", fr: "Retirer", ar: "حذف" },

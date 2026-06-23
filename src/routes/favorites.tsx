@@ -49,7 +49,7 @@ function FavoritesPage() {
             </p>
             <Link
               to="/menu"
-              className="mt-6 inline-flex rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
+              className="mt-6 inline-flex rounded-full bg-primary px-6 py-3 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_10px_30px_-10px_rgba(0,0,0,0.4)] transition hover:shadow-[var(--shadow-glow)] active:scale-95"
             >
               {t("browseMenu", lang)}
             </Link>

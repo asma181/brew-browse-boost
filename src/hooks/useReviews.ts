@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { getReviews, addReview, createOrGetSession } from "@/api/reviews";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { getReviews, addReview } from "@/api/reviews";
 import { toast } from "sonner";
 
 export interface DBReview {
@@ -17,6 +17,8 @@ export function useReviews(productId: string) {
   const [reviews, setReviews] = useState<DBReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -48,11 +50,10 @@ export function useReviews(productId: string) {
     name?: string;
     lang?: string;
   }) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
     try {
-      await createOrGetSession(lang);
-      // Ensure the session exists in the DB first (crucial for FK constraint)
-
-      // Insert the review
       const newReview = await addReview({
         productId,
         rating,
@@ -62,7 +63,6 @@ export function useReviews(productId: string) {
       });
 
       if (newReview) {
-        // Optimistic UI update: instantly insert into top of state
         setReviews((prev) => [newReview, ...prev]);
         return newReview;
       }
@@ -70,6 +70,9 @@ export function useReviews(productId: string) {
       const errMsg = err instanceof Error ? err.message : "Failed to submit review";
       toast.error(errMsg);
       throw err;
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
     }
   };
 
@@ -77,6 +80,7 @@ export function useReviews(productId: string) {
     reviews,
     loading,
     error,
+    submitting,
     refetch: fetchReviews,
     submitNewReview,
   };
