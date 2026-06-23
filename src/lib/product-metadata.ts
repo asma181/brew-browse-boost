@@ -7,69 +7,69 @@ export interface Category {
 }
 
 export const categories: Category[] = [
-  { id: "all", name: { en: "All", fr: "Tout", ar: "Ø§Ù„ÙƒÙ„" }, icon: "Sparkles" },
+  { id: "all", name: { en: "All", fr: "Tout", ar: "الكل" }, icon: "Sparkles" },
   {
     id: "breakfast",
-    name: { en: "Morning Party", fr: "Petit-déj", ar: "ÙØ·ÙˆØ±" },
+    name: { en: "Morning Party", fr: "Petit-déj", ar: "فطور" },
     icon: "Croissant",
   },
   {
     id: "caffeine",
-    name: { en: "Caffeine Addict", fr: "Caffeine Addict", ar: "Ø¹Ø´Ø§Ù‚ Ø§Ù„Ù‚Ù‡ÙˆØ©" },
+    name: { en: "Caffeine Addict", fr: "Caffeine Addict", ar: "عشاق القهوة" },
     icon: "Coffee",
   },
   {
     id: "desserts",
-    name: { en: "Desserts", fr: "Desserts", ar: "Ø­Ù„ÙˆÙŠØ§Øª" },
+    name: { en: "Desserts", fr: "Desserts", ar: "حلويات" },
     icon: "CakeSlice",
   },
-  { id: "crepes", name: { en: "Crêpes", fr: "Crêpes", ar: "ÙƒØ±ÙŠØ¨" }, icon: "Utensils" },
-  { id: "panini", name: { en: "Panini", fr: "Panini", ar: "Ø¨Ø§Ù†ÙŠÙ†ÙŠ" }, icon: "Sandwich" },
-  { id: "tacos", name: { en: "Tacos", fr: "Tacos", ar: "ØªØ§ÙƒÙˆØ³" }, icon: "Sandwich" },
+  { id: "crepes", name: { en: "Crêpes", fr: "Crêpes", ar: "كريب" }, icon: "Utensils" },
+  { id: "panini", name: { en: "Panini", fr: "Panini", ar: "بانيني" }, icon: "Sandwich" },
+  { id: "tacos", name: { en: "Tacos", fr: "Tacos", ar: "تاكوس" }, icon: "Sandwich" },
   {
     id: "omelette",
-    name: { en: "Omelette", fr: "Omelette", ar: "Ø£ÙˆÙ…Ù„ÙŠØª" },
+    name: { en: "Omelette", fr: "Omelette", ar: "أومليت" },
     icon: "EggFried",
   },
-  { id: "burger", name: { en: "Burger", fr: "Burger", ar: "Ø¨Ø±ØºØ±" }, icon: "Beef" },
+  { id: "burger", name: { en: "Burger", fr: "Burger", ar: "برغر" }, icon: "Beef" },
   {
     id: "tea-chill",
-    name: { en: "Tea and Chill", fr: "Tea and Chill", ar: "Tea and Chill" },
+    name: { en: "Tea and Chill", fr: "Tea and Chill", ar: "شاي واسترخاء" },
     icon: "Leaf",
   },
   {
     id: "juices",
-    name: { en: "Fresh Juices", fr: "Jus Frais", ar: "Ø¹ØµØ§Ø¦Ø±" },
+    name: { en: "Fresh Juices", fr: "Jus Frais", ar: "عصائر" },
     icon: "GlassWater",
   },
   {
     id: "smoothies",
-    name: { en: "Smoothies", fr: "Smoothies", ar: "Ø³Ù…ÙˆØ«ÙŠ" },
+    name: { en: "Smoothies", fr: "Smoothies", ar: "سموثي" },
     icon: "CupSoda",
   },
 ];
 
 export const tasteFilters: { id: Taste; label: LocalizedText; icon: string }[] = [
-  { id: "popular", label: { en: "Popular", fr: "Populaire", ar: "Ø´Ø§Ø¦Ø¹" }, icon: "Flame" },
+  { id: "popular", label: { en: "Popular", fr: "Populaire", ar: "شائع" }, icon: "Flame" },
   {
     id: "sweet",
-    label: { en: "Sweet Tooth", fr: "Bec sucré", ar: "Ù…Ø­Ø¨ Ø§Ù„Ø­Ù„ÙˆÙŠØ§Øª" },
+    label: { en: "Sweet Tooth", fr: "Bec sucré", ar: "محب الحلويات" },
     icon: "Candy",
   },
-  { id: "healthy", label: { en: "Healthy", fr: "Santé", ar: "ØµØ­ÙŠ" }, icon: "Leaf" },
+  { id: "healthy", label: { en: "Healthy", fr: "Santé", ar: "صحي" }, icon: "Leaf" },
   {
     id: "traditional",
-    label: { en: "Traditional", fr: "Traditionnel", ar: "ØªÙ‚Ù„ÙŠØ¯ÙŠ" },
+    label: { en: "Traditional", fr: "Traditionnel", ar: "تقليدي" },
     icon: "Landmark",
   },
   {
     id: "budget",
-    label: { en: "Budget Friendly", fr: "économique", ar: "Ø§Ù‚ØªØµØ§Ø¯ÙŠ" },
+    label: { en: "Budget Friendly", fr: "économique", ar: "اقتصادي" },
     icon: "Wallet",
   },
   {
     id: "coffee",
-    label: { en: "Coffee Lover", fr: "Amateur de café", ar: "Ù…Ø­Ø¨ Ø§Ù„Ù‚Ù‡ÙˆØ©" },
+    label: { en: "Coffee Lover", fr: "Amateur de café", ar: "محب القهوة" },
     icon: "Coffee",
   },
 ];

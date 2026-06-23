@@ -46,7 +46,7 @@ function CartPage() {
             <button
               onClick={() => {
                 clearCart();
-                toast.success("List cleared");
+                toast.success(t("listCleared", lang));
               }}
               className="ms-auto font-display text-xs font-medium text-muted-foreground transition hover:text-accent"
             >
@@ -57,7 +57,7 @@ function CartPage() {
 
         {loading ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
-            <p className="text-sm text-muted-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">{t("loading", lang)}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
@@ -214,7 +214,7 @@ function CartPage() {
               onClick={() => setShowSummary(false)}
               className="mt-6 w-full rounded-2xl bg-surface-elevated py-3.5 font-display text-sm font-semibold tracking-wide text-muted-foreground transition hover:bg-surface"
             >
-              Close
+              {t("close", lang)}
             </button>
           </div>
         </div>

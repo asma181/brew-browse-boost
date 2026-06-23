@@ -57,6 +57,32 @@ export const translations = {
   items: { en: "items", fr: "articles", ar: "عناصر" },
   filterAll: { en: "All tastes", fr: "Tous les goûts", ar: "كل الأذواق" },
   noResults: { en: "No items match your search", fr: "Aucun résultat", ar: "لا توجد نتائج" },
+  heroHeading: {
+    en: "Cozy sips,\ncrafted just for you.",
+    fr: "Douceurs,\nfaites avec amour.",
+    ar: "مشروبات دافئة،\nمعدة خصيصاً لك.",
+  },
+  loading: { en: "Loading...", fr: "Chargement...", ar: "جارٍ التحميل..." },
+  close: { en: "Close", fr: "Fermer", ar: "إغلاق" },
+  listCleared: { en: "List cleared", fr: "Liste vidée", ar: "تم مسح القائمة" },
+  noFavorites: { en: "No favorites yet", fr: "Aucun favori", ar: "لا توجد مفضلة بعد" },
+  noFavoritesHint: {
+    en: "Tap the heart on any item to save it here.",
+    fr: "Tapez sur le cœur pour enregistrer ici.",
+    ar: "اضغط على القلب في أي عنصر لحفظه هنا.",
+  },
+  pleaseRateFirst: { en: "Please rate first", fr: "Notez d'abord", ar: "رجاءً قم بالتقييم أولاً" },
+  enterValidReview: {
+    en: "Please enter a valid review",
+    fr: "Entrez un avis valide",
+    ar: "رجاءً أدخل تقييماً صحيحاً",
+  },
+  thanksForReview: {
+    en: "Thanks for your review!",
+    fr: "Merci pour votre avis !",
+    ar: "شكراً لتقييمك!",
+  },
+  addedToList: { en: "added to list", fr: "ajouté à la liste", ar: "أضيف للقائمة" },
   ratingTags: {
     en: ["Delicious", "Great value", "Beautiful presentation", "Cozy vibe", "Would order again"],
     fr: ["Délicieux", "Bon rapport", "Belle présentation", "Ambiance", "À refaire"],

@@ -142,7 +142,7 @@ function ProductPage() {
 
   const submitReview = async () => {
     if (reviewRating === 0) {
-      toast.error("Please rate first");
+      toast.error(t("pleaseRateFirst", lang));
       return;
     }
 
@@ -153,7 +153,7 @@ function ProductPage() {
 
     const sanitizedText = sanitizeReview(reviewText);
     if (!isValidReview(sanitizedText)) {
-      toast.error("Please enter a valid review");
+      toast.error(t("enterValidReview", lang));
       return;
     }
 
@@ -174,7 +174,7 @@ function ProductPage() {
       setReviewText("");
       setReviewRating(0);
       setSelectedTags([]);
-      toast.success("Thanks for your review!");
+      toast.success(t("thanksForReview", lang));
     } catch (err) {
       // Error is toasted inside the hook
     }
@@ -405,7 +405,7 @@ function ProductPage() {
               <button
                 onClick={() => {
                   addToCart(product.id);
-                  toast.success(`${name} added`);
+                  toast.success(`${name} ${t("addedToList", lang)}`);
                 }}
                 className="flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary py-3.5 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_4px_14px_-4px_oklch(0.55_0.08_45/0.5)] transition hover:shadow-[0_6px_20px_-6px_oklch(0.55_0.08_45/0.6)] active:scale-[0.98]"
               >

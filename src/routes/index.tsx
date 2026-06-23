@@ -95,10 +95,8 @@ function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 px-6 pb-7 pt-6">
             <p className="text-xs uppercase tracking-[0.25em] text-gold">{t("discover", lang)}</p>
-            <h2 className="mt-1.5 font-display text-4xl font-bold leading-[1.1]">
-              Cozy sips,
-              <br />
-              crafted just for you.
+            <h2 className="mt-1.5 font-display text-4xl font-bold leading-[1.1] whitespace-pre-line">
+              {t("heroHeading", lang)}
             </h2>
             <Link
               to="/menu"
@@ -170,7 +168,7 @@ function Home() {
           </div>
           <div className="scrollbar-hide -mx-5 flex gap-3.5 overflow-x-auto px-5 pb-2">
             {loading ? (
-              <p className="px-5 py-6 text-sm text-muted-foreground">Loading...</p>
+              <p className="px-5 py-6 text-sm text-muted-foreground">{t("loading", lang)}</p>
             ) : (
               favorites.map((p, i) => (
                 <div key={p.id} className="w-[170px] shrink-0">
@@ -206,7 +204,7 @@ function Home() {
                       {f.label[lang]}
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">
-                      {products.filter((p) => p.tastes.includes(f.id)).length} items
+                      {products.filter((p) => p.tastes.includes(f.id)).length} {t("items", lang)}
                     </div>
                   </div>
                 </Link>

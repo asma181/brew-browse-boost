@@ -33,7 +33,7 @@ function FavoritesPage() {
 
         {loading ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
-            <p className="text-sm text-muted-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">{t("loading", lang)}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="glass mt-10 rounded-3xl p-10 text-center">
@@ -43,9 +43,9 @@ function FavoritesPage() {
                 strokeWidth={1.5}
               />
             </div>
-            <h2 className="mt-5 font-display text-2xl font-semibold">No favorites yet</h2>
+            <h2 className="mt-5 font-display text-2xl font-semibold">{t("noFavorites", lang)}</h2>
             <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
-              Tap the heart on any item to save it here.
+              {t("noFavoritesHint", lang)}
             </p>
             <Link
               to="/menu"
