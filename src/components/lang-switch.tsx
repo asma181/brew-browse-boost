@@ -1,6 +1,6 @@
 import { useStore } from "@/lib/store";
 import { langNames } from "@/lib/i18n";
-import type { Lang } from "@/data/products";
+import type { Lang } from "@/types/product";
 import { Globe } from "lucide-react";
 import { useState } from "react";
 
@@ -25,7 +25,10 @@ export function LangSwitch() {
             {(Object.keys(langNames) as Lang[]).map((l) => (
               <button
                 key={l}
-                onClick={() => { setLang(l); setOpen(false); }}
+                onClick={() => {
+                  setLang(l);
+                  setOpen(false);
+                }}
                 className={`block w-full rounded-xl px-3 py-2 text-start text-sm transition ${lang === l ? "bg-primary text-primary-foreground" : "hover:bg-surface-elevated"}`}
               >
                 {langNames[l]}

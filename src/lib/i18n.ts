@@ -1,4 +1,4 @@
-import type { Lang } from "@/data/products";
+import type { Lang } from "@/types/product";
 
 export const translations = {
   appName: { en: "Brown Sugar", fr: "Brown Sugar", ar: "براون شوغر" },
@@ -18,7 +18,11 @@ export const translations = {
   showWaiter: { en: "Show to waiter", fr: "Montrer au serveur", ar: "أرِ النادل" },
   clearList: { en: "Clear list", fr: "Vider", ar: "مسح" },
   emptyList: { en: "Your list is empty", fr: "Liste vide", ar: "القائمة فارغة" },
-  emptyHint: { en: "Add items you'd like to order so you can show them to the waiter.", fr: "Ajoutez vos envies pour les montrer au serveur.", ar: "أضف ما تريد لتظهره للنادل." },
+  emptyHint: {
+    en: "Add items you'd like to order so you can show them to the waiter.",
+    fr: "Ajoutez vos envies pour les montrer au serveur.",
+    ar: "أضف ما تريد لتظهره للنادل.",
+  },
   browseMenu: { en: "Browse menu", fr: "Voir le menu", ar: "تصفح القائمة" },
   story: { en: "Our story", fr: "Notre histoire", ar: "قصتنا" },
   ingredients: { en: "Ingredients", fr: "Ingrédients", ar: "المكونات" },
@@ -28,17 +32,57 @@ export const translations = {
   alsoLike: { en: "You may also like", fr: "Vous aimerez aussi", ar: "قد يعجبك أيضاً" },
   reviews: { en: "Reviews", fr: "Avis", ar: "التقييمات" },
   rate: { en: "Rate this item", fr: "Notez", ar: "قيّم" },
-  yourReview: { en: "Share your thoughts (optional)", fr: "Votre avis (optionnel)", ar: "شاركنا رأيك" },
+  yourReview: {
+    en: "Share your thoughts ",
+    fr: "Votre avis ",
+    ar: "شاركنا رأيك",
+  },
   submit: { en: "Submit review", fr: "Envoyer", ar: "إرسال" },
   noReviews: { en: "Be the first to review", fr: "Soyez le premier", ar: "كن الأول" },
+  you: { en: "You", fr: "Vous", ar: "أنت" },
+  customer: { en: "Customer", fr: "Client", ar: "عميل" },
+  enterName: { en: "Enter your name", fr: "Entrez votre nom", ar: "أدخل اسمك" },
+  namePlaceholder: { en: "Your name", fr: "Votre nom", ar: "اسمك" },
+  confirm: { en: "Confirm", fr: "Confirmer", ar: "تأكيد" },
+  seeAll: { en: "See all", fr: "Voir tout", ar: "عرض الكل" },
   back: { en: "Back", fr: "Retour", ar: "رجوع" },
   qty: { en: "Qty", fr: "Qté", ar: "كمية" },
   remove: { en: "Remove", fr: "Retirer", ar: "حذف" },
   summary: { en: "Order Summary", fr: "Résumé", ar: "ملخص الطلب" },
-  table: { en: "Show this screen to your waiter", fr: "Montrez cet écran au serveur", ar: "أظهر هذه الشاشة للنادل" },
+  table: {
+    en: "Show this screen to your waiter",
+    fr: "Montrez cet écran au serveur",
+    ar: "أظهر هذه الشاشة للنادل",
+  },
   items: { en: "items", fr: "articles", ar: "عناصر" },
   filterAll: { en: "All tastes", fr: "Tous les goûts", ar: "كل الأذواق" },
   noResults: { en: "No items match your search", fr: "Aucun résultat", ar: "لا توجد نتائج" },
+  heroHeading: {
+    en: "Cozy sips,\ncrafted just for you.",
+    fr: "Douceurs,\nfaites avec amour.",
+    ar: "مشروبات دافئة،\nمعدة خصيصاً لك.",
+  },
+  loading: { en: "Loading...", fr: "Chargement...", ar: "جارٍ التحميل..." },
+  close: { en: "Close", fr: "Fermer", ar: "إغلاق" },
+  listCleared: { en: "List cleared", fr: "Liste vidée", ar: "تم مسح القائمة" },
+  noFavorites: { en: "No favorites yet", fr: "Aucun favori", ar: "لا توجد مفضلة بعد" },
+  noFavoritesHint: {
+    en: "Tap the heart on any item to save it here.",
+    fr: "Tapez sur le cœur pour enregistrer ici.",
+    ar: "اضغط على القلب في أي عنصر لحفظه هنا.",
+  },
+  pleaseRateFirst: { en: "Please rate first", fr: "Notez d'abord", ar: "رجاءً قم بالتقييم أولاً" },
+  enterValidReview: {
+    en: "Please enter a valid review",
+    fr: "Entrez un avis valide",
+    ar: "رجاءً أدخل تقييماً صحيحاً",
+  },
+  thanksForReview: {
+    en: "Thanks for your review!",
+    fr: "Merci pour votre avis !",
+    ar: "شكراً لتقييمك!",
+  },
+  addedToList: { en: "added to list", fr: "ajouté à la liste", ar: "أضيف للقائمة" },
   ratingTags: {
     en: ["Delicious", "Great value", "Beautiful presentation", "Cozy vibe", "Would order again"],
     fr: ["Délicieux", "Bon rapport", "Belle présentation", "Ambiance", "À refaire"],
@@ -47,9 +91,10 @@ export const translations = {
 } as const;
 
 export function t<K extends keyof typeof translations>(key: K, lang: Lang): string {
-  const v = translations[key];
-  if (Array.isArray((v as any)[lang])) return ((v as any)[lang] as string[]).join(", ");
-  return (v as any)[lang] as string;
+  const v = translations[key] as unknown as Record<Lang, string | readonly string[]>;
+  const val = v[lang];
+  if (Array.isArray(val)) return val.join(", ");
+  return val as string;
 }
 
 export const langNames: Record<Lang, string> = { en: "English", fr: "Français", ar: "العربية" };

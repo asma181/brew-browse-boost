@@ -10,12 +10,24 @@ const LS = {
   lang: "bs.lang",
 };
 
-export interface CartItem { id: string; qty: number; }
-export interface Review { id: string; productId: string; rating: number; text: string; tags: string[]; date: number; author: string; }
+export interface CartItem {
+  id: string;
+  qty: number;
+}
+export interface Review {
+  id: string;
+  productId: string;
+  rating: number;
+  text: string;
+  tags: string[];
+  date: number;
+  author: string;
+}
 
 interface StoreCtx {
   lang: Lang;
   setLang: (l: Lang) => void;
+  sessionId: string;
   cart: CartItem[];
   addToCart: (id: string) => void;
   setQty: (id: string, qty: number) => void;
@@ -39,16 +51,23 @@ function load<T>(key: string, fallback: T): T {
   try {
     const v = localStorage.getItem(key);
     return v ? (JSON.parse(v) as T) : fallback;
-  } catch { return fallback; }
+  } catch {
+    return fallback;
+  }
 }
 function save(key: string, value: unknown) {
   if (typeof window === "undefined") return;
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (err) {
+    console.error("Storage save failed:", err);
+  }
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [lang, setLangState] = useState<Lang>("en");
+  const [sessionId, setSessionId] = useState<string>("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [ratings, setRatings] = useState<Record<string, number>>({});
@@ -62,15 +81,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setRatings(load(LS.ratings, {}));
     setReviews(load(LS.reviews, []));
     setViews(load(LS.views, {}));
+
+    let sid = localStorage.getItem("bs.session_id");
+    if (!sid) {
+      sid =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem("bs.session_id", sid);
+    }
+    setSessionId(sid);
+
     setHydrated(true);
   }, []);
 
-  useEffect(() => { if (hydrated) save(LS.lang, lang); }, [lang, hydrated]);
-  useEffect(() => { if (hydrated) save(LS.cart, cart); }, [cart, hydrated]);
-  useEffect(() => { if (hydrated) save(LS.fav, favorites); }, [favorites, hydrated]);
-  useEffect(() => { if (hydrated) save(LS.ratings, ratings); }, [ratings, hydrated]);
-  useEffect(() => { if (hydrated) save(LS.reviews, reviews); }, [reviews, hydrated]);
-  useEffect(() => { if (hydrated) save(LS.views, views); }, [views, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.lang, lang);
+  }, [lang, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.cart, cart);
+  }, [cart, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.fav, favorites);
+  }, [favorites, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.ratings, ratings);
+  }, [ratings, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.reviews, reviews);
+  }, [reviews, hydrated]);
+  useEffect(() => {
+    if (hydrated) save(LS.views, views);
+  }, [views, hydrated]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -80,22 +122,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const value: StoreCtx = {
     lang,
     setLang: setLangState,
+    sessionId,
     cart,
-    addToCart: (id) => setCart((prev) => {
-      const found = prev.find((c) => c.id === id);
-      if (found) return prev.map((c) => c.id === id ? { ...c, qty: c.qty + 1 } : c);
-      return [...prev, { id, qty: 1 }];
-    }),
-    setQty: (id, qty) => setCart((prev) => qty <= 0 ? prev.filter((c) => c.id !== id) : prev.map((c) => c.id === id ? { ...c, qty } : c)),
+    addToCart: (id) =>
+      setCart((prev) => {
+        const found = prev.find((c) => c.id === id);
+        if (found) return prev.map((c) => (c.id === id ? { ...c, qty: c.qty + 1 } : c));
+        return [...prev, { id, qty: 1 }];
+      }),
+    setQty: (id, qty) =>
+      setCart((prev) =>
+        qty <= 0
+          ? prev.filter((c) => c.id !== id)
+          : prev.map((c) => (c.id === id ? { ...c, qty } : c)),
+      ),
     removeFromCart: (id) => setCart((prev) => prev.filter((c) => c.id !== id)),
     clearCart: () => setCart([]),
     favorites,
-    toggleFav: (id) => setFavorites((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]),
+    toggleFav: (id) =>
+      setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id])),
     isFav: (id) => favorites.includes(id),
     ratings,
     setRating: (id, r) => setRatings((prev) => ({ ...prev, [id]: r })),
     reviews,
-    addReview: (r) => setReviews((prev) => [{ ...r, id: crypto.randomUUID(), date: Date.now() }, ...prev]),
+    addReview: (r) =>
+      setReviews((prev) => [
+        {
+          ...r,
+          id:
+            typeof crypto !== "undefined" && crypto.randomUUID
+              ? crypto.randomUUID()
+              : Math.random().toString(36).substring(2) + Date.now().toString(36),
+          date: Date.now(),
+        },
+        ...prev,
+      ]),
     views,
     trackView: (id) => setViews((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 })),
   };

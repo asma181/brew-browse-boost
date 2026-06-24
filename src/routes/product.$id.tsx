@@ -1,105 +1,215 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Heart, Plus, Minus, Star, Leaf, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Heart,
+  Plus,
+  Minus,
+  Star,
+  Leaf,
+  AlertTriangle,
+  ShoppingBag,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getProduct, products } from "@/data/products";
+import { getProduct } from "@/api/products";
+import { ProductCard } from "@/components/product-card";
+import { useProducts } from "@/hooks/useProducts";
+import { productDescription, productIngredients, productName } from "@/lib/product-text";
 import { useStore } from "@/lib/store";
 import { t, translations } from "@/lib/i18n";
-import { ProductCard } from "@/components/product-card";
+import type { Product } from "@/types/product";
+import { useReviews } from "@/hooks/useReviews";
+import { sanitizeReview, isValidReview } from "@/lib/review-validation";
+import { ReviewCard } from "@/components/review-card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+type LoaderData = {
+  product: Product;
+};
 
 export const Route = createFileRoute("/product/$id")({
-  head: ({ params }) => {
-    const p = getProduct(params.id);
-    if (!p) return { meta: [{ title: "Not found" }] };
-    return {
-      meta: [
-        { title: `${p.name.en} — Brown Sugar` },
-        { name: "description", content: p.description.en },
-        { property: "og:title", content: `${p.name.en} — Brown Sugar` },
-        { property: "og:description", content: p.description.en },
-        { property: "og:image", content: p.image },
-      ],
-    };
-  },
-  loader: ({ params }) => {
-    const product = getProduct(params.id);
-    if (!product) throw notFound();
+  head: () => ({
+    meta: [
+      { title: "Product - Brown Sugar" },
+      { name: "description", content: "View item details from the Brown Sugar menu." },
+    ],
+  }),
+  loader: async ({ params }): Promise<LoaderData> => {
+    const product = await getProduct(params.id as string);
+
+    if (!product) {
+      throw notFound();
+    }
+
     return { product };
   },
   notFoundComponent: () => (
     <div className="grid min-h-screen place-items-center px-6 text-center">
       <div>
         <h1 className="font-display text-3xl">Item not found</h1>
-        <Link to="/menu" className="mt-4 inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Back to menu</Link>
+        <Link
+          to="/menu"
+          className="mt-4 inline-block rounded-full bg-primary px-5 py-2 font-display text-sm font-semibold text-primary-foreground"
+        >
+          Back to menu
+        </Link>
       </div>
     </div>
   ),
-  errorComponent: ({ error, reset }) => {
-    const router = useRouter();
-    return (
-      <div className="grid min-h-screen place-items-center px-6 text-center">
-        <div>
-          <h1 className="font-display text-2xl">Couldn't load this item</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-          <button onClick={() => { router.invalidate(); reset(); }} className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">Try again</button>
-        </div>
-      </div>
-    );
-  },
+  errorComponent: ProductErrorComponent,
   component: ProductPage,
 });
 
+function ProductErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <div className="grid min-h-screen place-items-center px-6 text-center">
+      <div>
+        <h1 className="font-display text-2xl">Couldn't load this item</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <button
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
+          className="mt-4 rounded-full bg-primary px-5 py-2 font-display text-sm font-semibold text-primary-foreground"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProductPage() {
   const { product } = Route.useLoaderData();
-  const { lang, isFav, toggleFav, addToCart, cart, setQty, removeFromCart, ratings, setRating, reviews, addReview, trackView } = useStore();
+  const { products, loading } = useProducts();
+  const {
+    lang,
+    isFav,
+    toggleFav,
+    addToCart,
+    cart,
+    setQty,
+    removeFromCart,
+    ratings,
+    setRating,
+    trackView,
+    sessionId,
+  } = useStore();
+  const {
+    reviews: dbReviews,
+    loading: reviewsLoading,
+    error: reviewsError,
+    submitting: reviewSubmitting,
+    submitNewReview,
+  } = useReviews(product.id);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customerName, setCustomerName] = useState("");
+  const [showNameModal, setShowNameModal] = useState(false);
+  const name = productName(product, lang);
+  const description = productDescription(product, lang);
 
-  useEffect(() => { trackView(product.id); }, [product.id]); // eslint-disable-line
+  useEffect(() => {
+    if (!product.id) {
+      console.error("Product has no id:", product);
+    }
+    trackView(product.id);
+  }, [product.id]); // eslint-disable-line
 
   const cartItem = cart.find((c) => c.id === product.id);
   const inCart = !!cartItem;
-  const userRating = ratings[product.id];
-  const displayRating = userRating ?? product.baseRating;
-  const productReviews = reviews.filter((r) => r.productId === product.id);
-  const totalReviews = product.baseReviews + productReviews.length;
+
+  // Combine: base rating and DB reviews average
+  const dbRatingsSum = dbReviews.reduce((sum, r) => sum + r.rating, 0);
+  const totalReviews = product.base_reviews + dbReviews.length;
+  const displayRating =
+    totalReviews > 0
+      ? (product.base_rating * product.base_reviews + dbRatingsSum) / totalReviews
+      : product.base_rating;
 
   const pairs = (product.pairs ?? [])
-    .map((id: string) => getProduct(id))
-    .filter(Boolean) as NonNullable<ReturnType<typeof getProduct>>[];
+    .map((id) => products.find((p) => p.id === id))
+    .filter((pair) => pair !== undefined);
 
   const alsoLike = products
     .filter((p) => p.id !== product.id && p.category !== product.category)
-    .sort((a, b) => b.baseRating - a.baseRating)
+    .sort((a, b) => b.base_rating - a.base_rating)
     .slice(0, 4);
 
   const ratingTags = translations.ratingTags[lang];
 
-  const submitReview = () => {
-    if (reviewRating === 0) { toast.error("Please rate first"); return; }
-    setRating(product.id, reviewRating);
-    addReview({ productId: product.id, rating: reviewRating, text: reviewText, tags: selectedTags, author: "You" });
-    setReviewText(""); setReviewRating(0); setSelectedTags([]);
-    toast.success("Thanks for your review!");
+  const submitReview = async () => {
+    if (reviewRating === 0) {
+      toast.error(t("pleaseRateFirst", lang));
+      return;
+    }
+
+    if (!customerName.trim()) {
+      setShowNameModal(true);
+      return;
+    }
+
+    const sanitizedText = sanitizeReview(reviewText);
+    if (!isValidReview(sanitizedText)) {
+      toast.error(t("enterValidReview", lang));
+      return;
+    }
+
+    try {
+      const commentWithTags =
+        selectedTags.length > 0
+          ? `[${selectedTags.join(", ")}] ${sanitizedText}`.trim()
+          : sanitizedText;
+
+      await submitNewReview({
+        rating: reviewRating,
+        comment: commentWithTags,
+        name: customerName.trim(),
+        lang,
+      });
+
+      setRating(product.id, reviewRating);
+      setReviewText("");
+      setReviewRating(0);
+      setSelectedTags([]);
+      toast.success(t("thanksForReview", lang));
+    } catch (err) {
+      // Error is toasted inside the hook
+    }
+  };
+
+  const handleNameConfirm = async () => {
+    if (!customerName.trim()) return;
+    setShowNameModal(false);
+    try {
+      await submitReview();
+    } catch {
+      setShowNameModal(true);
+    }
   };
 
   return (
     <div className="min-h-screen pb-28">
-      {/* Image hero */}
       <div className="relative h-[55vh] min-h-[380px] w-full overflow-hidden">
-        <img src={product.image} alt={product.name[lang]} className="h-full w-full object-cover" />
+        <img src={product.image_url} alt={name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <Link to="/menu" className="glass grid h-10 w-10 place-items-center rounded-full">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           </Link>
           <button
             onClick={() => toggleFav(product.id)}
             className="glass grid h-10 w-10 place-items-center rounded-full"
             aria-label="favorite"
           >
-            <Heart className={`h-4 w-4 ${isFav(product.id) ? "fill-accent text-accent" : ""}`} />
+            <Heart
+              className={`h-4 w-4 ${isFav(product.id) ? "fill-accent text-accent" : ""}`}
+              strokeWidth={1.5}
+            />
           </button>
         </div>
       </div>
@@ -108,37 +218,40 @@ function ProductPage() {
         <div className="animate-float-up px-1">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <span className="text-xs uppercase tracking-[0.2em] text-gold">{product.category}</span>
-              <h1 className="mt-1 font-display text-3xl font-bold leading-tight">{product.name[lang]}</h1>
+              <span className="text-xs uppercase tracking-[0.2em] text-gold">
+                {product.category}
+              </span>
+              <h1 className="mt-1 font-display text-3xl font-bold leading-tight">{name}</h1>
               <div className="mt-2 flex items-center gap-3 text-sm">
                 <span className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-gold text-gold" />
+                  <Star className="h-4 w-4 fill-gold text-gold" strokeWidth={1.5} />
                   <strong>{displayRating.toFixed(1)}</strong>
                   <span className="text-muted-foreground">({totalReviews})</span>
                 </span>
               </div>
             </div>
             <div className="text-end">
-              <div className="font-display text-3xl font-bold text-gradient-gold">{product.price.toFixed(3)} DT</div>
+              <div className="font-display text-3xl font-bold text-gold">
+                {product.price.toFixed(3)} DT
+              </div>
             </div>
           </div>
 
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{product.description[lang]}</p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{description}</p>
         </div>
 
-        {/* Story removed per request */}
-
-        {/* Ingredients & allergens */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gold">
-              <Leaf className="h-3.5 w-3.5" /> {t("ingredients", lang)}
+              <Leaf className="h-3.5 w-3.5" strokeWidth={1.5} /> {t("ingredients", lang)}
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{product.ingredients[lang]}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {productIngredients(product, lang)}
+            </p>
           </div>
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-accent">
-              <AlertTriangle className="h-3.5 w-3.5" /> {t("allergens", lang)}
+              <AlertTriangle className="h-3.5 w-3.5" strokeWidth={1.5} /> {t("allergens", lang)}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
               {product.allergens.length ? product.allergens.join(", ") : t("none", lang)}
@@ -146,8 +259,7 @@ function ProductPage() {
           </div>
         </div>
 
-        {/* Pairs */}
-        {pairs.length > 0 && (
+        {!loading && pairs.length > 0 && (
           <Section title={t("pairs", lang)}>
             <div className="scrollbar-hide -mx-5 flex gap-3 overflow-x-auto px-5">
               {pairs.map((p, i) => (
@@ -159,79 +271,116 @@ function ProductPage() {
           </Section>
         )}
 
-        {/* Reviews */}
         <Section title={t("reviews", lang)}>
           <div className="glass rounded-2xl p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("rate", lang)}</p>
+            <p className="font-display text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("rate", lang)}
+            </p>
             <div className="mt-2 flex gap-1">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n} onClick={() => setReviewRating(n)}>
-                  <Star className={`h-7 w-7 transition ${n <= reviewRating ? "fill-gold text-gold" : "text-muted-foreground"}`} />
+                <button
+                  key={n}
+                  onClick={() => setReviewRating(n)}
+                  aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                >
+                  <Star
+                    className={`h-7 w-7 transition ${n <= reviewRating ? "fill-gold text-gold" : "text-muted-foreground"}`}
+                    strokeWidth={1.5}
+                  />
                 </button>
               ))}
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {ratingTags.map((tag: string) => (
+              {ratingTags.map((tag) => (
                 <button
                   key={tag}
-                  onClick={() => setSelectedTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag])}
-                  className={`rounded-full px-3 py-1 text-[11px] font-medium transition ${
-                    selectedTags.includes(tag) ? "bg-primary text-primary-foreground" : "bg-surface-elevated text-muted-foreground"
+                  onClick={() =>
+                    setSelectedTags((prev) =>
+                      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+                    )
+                  }
+                  className={`rounded-full px-3 py-1 font-display text-[11px] font-medium transition ${
+                    selectedTags.includes(tag)
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-surface-elevated text-muted-foreground"
                   }`}
                 >
                   {tag}
                 </button>
               ))}
             </div>
-            <textarea
+            <Textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder={t("yourReview", lang)}
-              rows={2}
-              className="mt-3 w-full resize-none rounded-xl bg-surface px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
+              rows={3}
+              maxLength={500}
+              className="mt-3 w-full resize-none break-words rounded-xl bg-surface px-3 py-2.5 font-display text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary min-h-[auto] border-none shadow-none focus-visible:ring-0"
             />
-            <button onClick={submitReview} className="mt-3 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]">
-              {t("submit", lang)}
+            <button
+              onClick={submitReview}
+              disabled={reviewSubmitting}
+              className="mt-3 w-full rounded-xl bg-primary py-2.5 font-display text-sm font-semibold tracking-wide text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
+            >
+              {reviewSubmitting
+                ? lang === "fr"
+                  ? "Envoi..."
+                  : lang === "ar"
+                    ? "جاري الإرسال..."
+                    : "Submitting..."
+                : t("submit", lang)}
             </button>
           </div>
 
-          {productReviews.length > 0 ? (
-            <div className="mt-3 space-y-2">
-              {productReviews.map((r) => (
-                <div key={r.id} className="glass rounded-2xl p-4">
-                  <div className="flex items-center justify-between">
-                    <strong className="text-sm">{r.author}</strong>
-                    <span className="flex items-center gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`h-3 w-3 ${i < r.rating ? "fill-gold text-gold" : "text-muted-foreground"}`} />
-                      ))}
-                    </span>
+          {reviewsLoading ? (
+            <p className="mt-3 text-center text-xs text-muted-foreground">Loading reviews...</p>
+          ) : reviewsError ? (
+            <div className="mt-3 rounded-xl bg-destructive/10 p-3 text-center text-xs text-destructive">
+              Error: {reviewsError}
+            </div>
+          ) : dbReviews.length > 0 ? (
+            <div className="mt-3">
+              {dbReviews.map((r, idx) => {
+                const isOwnReview = r.session_id === sessionId;
+                const author = isOwnReview ? t("you", lang) : r.name || t("customer", lang);
+                const formattedDate = new Date(r.created_at).toLocaleDateString(
+                  lang === "ar" ? "ar-EG" : lang === "fr" ? "fr-FR" : "en-US",
+                  { year: "numeric", month: "short", day: "numeric" },
+                );
+
+                return (
+                  <div
+                    key={r.id}
+                    className="animate-float-up"
+                    style={{ animationDelay: `${idx * 60}ms` }}
+                  >
+                    {idx > 0 && <div className="mx-2 border-t border-border/10" />}
+                    <ReviewCard
+                      review={r}
+                      isOwnReview={isOwnReview}
+                      author={author}
+                      formattedDate={formattedDate}
+                    />
                   </div>
-                  {r.text && <p className="mt-2 text-sm text-muted-foreground">{r.text}</p>}
-                  {r.tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {r.tags.map((tag) => (
-                        <span key={tag} className="rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] text-muted-foreground">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="mt-3 text-center text-xs text-muted-foreground">{t("noReviews", lang)}</p>
           )}
         </Section>
 
-        {/* You may also like */}
-        <Section title={t("alsoLike", lang)}>
-          <div className="grid grid-cols-2 gap-3">
-            {alsoLike.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-          </div>
-        </Section>
+        {!loading && (
+          <Section title={t("alsoLike", lang)}>
+            <div className="grid grid-cols-2 gap-3">
+              {alsoLike.map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </div>
+          </Section>
+        )}
       </div>
 
-      {/* Sticky add */}
       <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto max-w-md">
           <div className="glass flex items-center gap-3 rounded-3xl p-3 shadow-warm">
@@ -244,31 +393,69 @@ function ProductPage() {
                   }}
                   className="grid h-9 w-9 place-items-center rounded-xl bg-surface"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-4 w-4" strokeWidth={1.5} />
                 </button>
                 <span className="font-display text-lg font-bold">{cartItem!.qty}</span>
                 <button
                   onClick={() => setQty(product.id, cartItem!.qty + 1)}
                   className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" strokeWidth={1.5} />
                 </button>
               </div>
             ) : (
               <button
-                onClick={() => { addToCart(product.id); toast.success(`${product.name[lang]} added`); }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition active:scale-[0.98]"
+                onClick={() => {
+                  addToCart(product.id);
+                  toast.success(`${name} ${t("addedToList", lang)}`);
+                }}
+                className="flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary py-3.5 font-display text-sm font-semibold tracking-wide text-primary-foreground shadow-[0_4px_14px_-4px_oklch(0.55_0.08_45/0.5)] transition hover:shadow-[0_6px_20px_-6px_oklch(0.55_0.08_45/0.6)] active:scale-[0.98]"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" strokeWidth={1.5} />
                 {t("addToList", lang)}
               </button>
             )}
-            <Link to="/cart" className="rounded-2xl bg-gold px-4 py-3 text-sm font-bold text-background">
+            <Link
+              to="/cart"
+              className="flex items-center gap-2 rounded-2xl bg-gold px-4 py-3.5 font-display text-sm font-bold tracking-wide text-background transition hover:bg-gold/90 active:scale-[0.98]"
+            >
+              <ShoppingBag className="h-4 w-4" strokeWidth={1.5} />
               {t("cart", lang)}
             </Link>
           </div>
         </div>
       </div>
+      {/* Name modal */}
+      {showNameModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
+          onClick={() => setShowNameModal(false)}
+        >
+          <div
+            className="glass w-full max-w-sm rounded-3xl p-6 shadow-warm animate-float-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-lg font-semibold">{t("enterName", lang)}</h3>
+            <Input
+              type="text"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleNameConfirm()}
+              placeholder={t("namePlaceholder", lang)}
+              autoFocus
+              inputMode="text"
+              className="mt-4 w-full rounded-xl bg-surface px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary h-auto border-none shadow-none focus-visible:ring-0"
+            />
+            <button
+              onClick={handleNameConfirm}
+              disabled={!customerName.trim()}
+              className="mt-4 w-full rounded-xl bg-primary py-3 font-display text-sm font-semibold tracking-wide text-primary-foreground transition active:scale-[0.98] disabled:opacity-40"
+            >
+              {t("confirm", lang)}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
