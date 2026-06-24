@@ -21,6 +21,8 @@ import type { Product } from "@/types/product";
 import { useReviews } from "@/hooks/useReviews";
 import { sanitizeReview, isValidReview } from "@/lib/review-validation";
 import { ReviewCard } from "@/components/review-card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type LoaderData = {
   product: Product;
@@ -307,13 +309,13 @@ function ProductPage() {
                 </button>
               ))}
             </div>
-            <textarea
+            <Textarea
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
               placeholder={t("yourReview", lang)}
               rows={3}
               maxLength={500}
-              className="mt-3 w-full resize-none break-words rounded-xl bg-surface px-3 py-2.5 font-display text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
+              className="mt-3 w-full resize-none break-words rounded-xl bg-surface px-3 py-2.5 font-display text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary min-h-[auto] border-none shadow-none focus-visible:ring-0"
             />
             <button
               onClick={submitReview}
@@ -434,14 +436,15 @@ function ProductPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-lg font-semibold">{t("enterName", lang)}</h3>
-            <input
+            <Input
               type="text"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleNameConfirm()}
               placeholder={t("namePlaceholder", lang)}
               autoFocus
-              className="mt-4 w-full rounded-xl bg-surface px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary"
+              inputMode="text"
+              className="mt-4 w-full rounded-xl bg-surface px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary h-auto border-none shadow-none focus-visible:ring-0"
             />
             <button
               onClick={handleNameConfirm}

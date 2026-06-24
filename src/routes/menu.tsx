@@ -8,6 +8,7 @@ import { useCategoryNav } from "@/hooks/useCategoryNav";
 import { useStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { BottomNav } from "@/components/bottom-nav";
+import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/product-card";
 import { CategorySection } from "@/components/category-section";
 import type { Product, Taste } from "@/types/product";
@@ -173,11 +174,12 @@ function Menu() {
         {/* Search */}
         <div className="glass flex items-center gap-3 rounded-2xl px-4 py-3.5 transition focus-within:ring-1 focus-within:ring-gold/30">
           <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" strokeWidth={1.5} />
-          <input
+          <Input
             value={q}
             onChange={(e) => setSearch({ q: e.target.value || undefined })}
             placeholder={t("search", lang)}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            inputMode="text"
+            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground h-auto w-auto rounded-none border-none px-0 py-0 shadow-none focus-visible:ring-0"
           />
           {q && (
             <button onClick={() => setSearch({ q: undefined })} className="text-muted-foreground">
